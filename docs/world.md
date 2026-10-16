@@ -107,6 +107,32 @@ Taller tiles are tinted slightly brighter ([`fn top_tint`](source/world.md#fn_to
 so terraces read at a glance. Then each row's mesh is placed at z = x + y.
 [Why that works](engine.md#renderingdepth_in_a_2d_isometric_world).
 
+## Beyond the edge: the river, lava and spills
+
+![Ember Isle: the volcano, its lava stream, and lava pouring off the edge](img/oncall-volcano.png)
+
+- **The river has no visible ends.** It runs 60 tiles past the islands in both
+  directions, and the camera is clamped to the islands plus a margin
+  ([`World::pan`](source/world.md#struct_world), [`clamp`](source/view.md#fn_clamp)),
+  so it always seems to come from and go somewhere out of sight.
+- **Lava** is a river of its own (`"kind": "lava"` in `islands.json`) that stays on
+  its island. Its sprites are the water sprites **inverted** (blue turns orange) and
+  mapped onto a red-orange-yellow ramp by `tools/make-textures.py`, so lava and
+  water share a look. It glows, churns and carries a slow crust ([`water.rs`](source/water.md)).
+- **Spills** (`spills` in `islands.json`): the generator carves a notch from the river
+  to the island's edge and marks the last tile; the game pours a curtain of streaks
+  from that edge down past the cliff into the void (white for water, orange for lava).
+- **Ember Isle** is larger (radius 8), and the volcano scales with it.
+- **Three new floating islands** drift along the lower-left of the river: Mangrove
+  Hollow, Firefly Reef and Heron Rock ([Nodes and lore](nodes.md)).
+- **The void's grid** is drawn as one mesh over a repeating texture with per-vertex
+  colour: the hue drifts from jungle green through teal and blue to violet across the
+  map ([`spawn_backdrop`](source/world.md#fn_spawn_backdrop)).
+- **Clouds**: 16 of them, larger, with bigger emoji, since they sit above everything,
+  closer to you.
+
+![The southern islands: Firefly Reef and Heron Rock](img/oncall-south.png)
+
 ## The river and the links
 
 The river's centreline is exported as `streams`, and data frames float down it.

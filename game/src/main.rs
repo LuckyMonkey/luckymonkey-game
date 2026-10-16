@@ -179,7 +179,16 @@ fn load_art(mut commands: Commands, mut images: ResMut<Assets<Image>>, mut fonts
         vignette: vignette(&mut images),
         pill: pill(&mut images, false),
         pill_border: pill(&mut images, true),
-        grid: png(&mut images, include_bytes!("../../public/images/grid_background.png"), ImageSampler::linear()),
+        grid: png(
+            &mut images,
+            include_bytes!("../../public/images/grid_background.png"),
+            // Repeats across the backdrop mesh (world.rs: spawn_backdrop).
+            ImageSampler::Descriptor(bevy::image::ImageSamplerDescriptor {
+                address_mode_u: bevy::image::ImageAddressMode::Repeat,
+                address_mode_v: bevy::image::ImageAddressMode::Repeat,
+                ..bevy::image::ImageSamplerDescriptor::linear()
+            }),
+        ),
     });
 }
 

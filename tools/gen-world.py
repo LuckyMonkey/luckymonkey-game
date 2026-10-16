@@ -9,7 +9,7 @@ the void they become aqueducts joining the islands.
 import json, math, os, random, sys
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "game", "data")
-GRASS, WATER, PLATFORM, SCORCHED, VOLCANO, TEMPLE = 0, 1, 4, 5, 6, 7
+GRASS, WATER, LAVA, PLATFORM, SCORCHED, VOLCANO, TEMPLE = 0, 1, 2, 4, 5, 6, 7
 
 
 def load(name):
@@ -45,10 +45,11 @@ def main():
                     if step <= 3:
                         h, kind = base + 4 - step, TEMPLE
                 elif biome == "volcano":
-                    if d < 1.5:
-                        h, kind = base + 4, VOLCANO
-                    elif d < 3.2:
-                        h, kind = base + int(4.5 - d), SCORCHED if d > 2.4 else VOLCANO
+                    core, slope = max(1.5, r * 0.22), max(3.2, r * 0.5)
+                    if d < core:
+                        h, kind = base + 5, VOLCANO
+                    elif d < slope:
+                        h, kind = base + 1 + int(4 * (slope - d) / (slope - core)), SCORCHED if d > (core + slope) / 2 else VOLCANO
                     elif rng.random() < 0.35:
                         kind = SCORCHED
                 elif biome == "grove" and rng.random() < 0.08:
@@ -116,8 +117,10 @@ def main():
                 decos.append(dict(type=rng.choice(["bamboo", "bush", "flower"]), position=dict(x=c[0], y=c[1], height=0)))
 
     # Rivers: waypoints [x, y, height]; water 3 wide with a bank on each side.
-    streams = []
+    streams, lava_streams, river_centres = [], [], {}
     for river in lay["rivers"]:
+        lava = river.get("kind") == "lava"
+        liquid = LAVA if lava else WATER
         pts, centre = river["points"], []
         for (x0, y0, h0), (x1, y1, h1) in zip(pts, pts[1:]):
             seg = line((x0, y0), (x1, y1))
@@ -133,11 +136,14 @@ def main():
             for dx, dy in ((0, 0), (1, 0), (0, 1)):
                     c = (x + dx, y + dy)
                     old = tiles.get(c)
-                    if old and old["type"] == WATER and old["height"] <= h:
+                    if old and old["type"] == liquid and old["height"] <= h:
                         continue
-                    put(*c, WATER, h, **({"fall": True} if fall else {}))
+                    if lava and not old:
+                        continue  # lava stays on its island
+                    put(*c, liquid, h, **({"fall": True} if fall and not lava else {}))
             prev_h = h
-        for x, y, h in centre:
+        river_centres[river.get("name", "main")] = (centre, liquid)
+        for x, y, h in ([] if lava else centre):
             for dx in range(-1, 3):
                 for dy in range(-1, 3):
                     c = (x + dx, y + dy)
@@ -145,7 +151,7 @@ def main():
                         put(*c, GRASS, h, bank=True)
                         if rng.random() < 0.2:
                             decos.append(dict(type=rng.choice(["tree", "bush", "bamboo", "rock"]), position=dict(x=c[0], y=c[1], height=h)))
-        streams.append([dict(x=x, y=y, height=h) for x, y, h in centre])
+        (lava_streams if lava else streams).append([dict(x=x, y=y, height=h) for x, y, h in centre if (x, y) in tiles])
 
     # Pools: lagoons and lakes (keep the water level of whatever is there).
     for p in lay.get("pools", []):
@@ -160,6 +166,31 @@ def main():
                         decos.append(dict(type="lotus", position=dict(x=c[0], y=c[1], height=h)))
                 elif math.hypot(dx, dy) <= r + 1.2 and c not in tiles:
                     put(*c, GRASS, h)
+
+    # Spills: a notch in the bank where the river (or lava) pours off the edge into the void.
+    # Each entry: {"river": name, "near": [x, y], "dir": [1, 0] or [0, 1]} (the two
+    # directions whose edges face the camera). Carves from the nearest centre point
+    # until the next cell is void, and marks the last cell `spill` (1: +x edge, 2: +y).
+    spilled = 0
+    for sp in lay.get("spills", []):
+        centre, liquid = river_centres[sp.get("river", "main")]
+        nx, ny = sp["near"]
+        x, y, h = min((c for c in centre if (c[0], c[1]) in tiles), key=lambda c: (c[0] - nx) ** 2 + (c[1] - ny) ** 2)
+        dx, dy = sp["dir"]
+        path = []
+        for k in range(1, 9):
+            c = (x + dx * k, y + dy * k)
+            if c not in tiles:
+                break
+            path.append(c)
+        else:
+            print(f"spill near {sp['near']}: no edge within 8 cells, skipped")
+            continue
+        for c in path:
+            tiles[c].update(type=liquid, height=h)
+        last = path[-1] if path else (x, y)
+        tiles[last]["spill"] = 1 if dx else 2
+        spilled += 1
 
     # Nodes that landed in the river or the void step onto the nearest bank (water nodes may stay).
     for nid, (x, y) in list(where.items()):
@@ -191,7 +222,7 @@ def main():
     # Decorations on island ground (never on node cells or bridges).
     taken = set(where.values())
     for c, t in tiles.items():
-        if c in taken or c not in owner or t["type"] in (WATER, TEMPLE) or any(abs(c[0] - w[0]) + abs(c[1] - w[1]) <= 1 for w in taken):
+        if c in taken or c not in owner or t["type"] in (WATER, LAVA, TEMPLE) or any(abs(c[0] - w[0]) + abs(c[1] - w[1]) <= 1 for w in taken):
             continue
         if rng.random() < lay.get("deco_density", 0.12):
             biome = next(i.get("biome") for i in lay["islands"] if i["id"] == owner[c])
@@ -209,7 +240,7 @@ def main():
 
     islands = [dict(id=i["id"], name=i["name"], emoji=i.get("emoji", "🏝️"),
                     center=dict(x=i["center"][0], y=i["center"][1], height=ground(tuple(i["center"])) or i["height"]),
-                    nodes=list(i["nodes"])) for i in lay["islands"]]
+                    nodes=list(i["nodes"]), lore=i.get("lore", "")) for i in lay["islands"]]
 
     # Faint far-off islands beyond the map edge.
     backdrop = []
@@ -229,12 +260,13 @@ def main():
             n["x"], n["y"] = rng.choice(wet if swims else land)
 
     world = dict(seed=lay.get("seed"), baked=True, tiles=sorted(tiles.values(), key=lambda t: (t["x"], t["y"])),
-                 nodes=out_nodes, decorations=decos, streams=streams, islands=islands, backdrop=backdrop)
+                 nodes=out_nodes, decorations=decos, streams=streams, lava_streams=lava_streams, islands=islands,
+                 backdrop=backdrop, legend=lay.get("legend", ""))
     with open(os.path.join(ROOT, "world.json"), "w", encoding="utf-8") as f:
         json.dump(world, f, ensure_ascii=False, separators=(",", ":"))
     with open(os.path.join(ROOT, "npcs.json"), "w", encoding="utf-8") as f:
         json.dump(npcs, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"world.json: {len(tiles)} tiles, {len(islands)} islands, {len(bridged)} bridges, {len(streams)} rivers, {placed} islets")
+    print(f"world.json: {len(tiles)} tiles, {len(islands)} islands, {len(bridged)} bridges, {len(streams)} rivers, {len(lava_streams)} lava, {spilled} spills, {placed} islets")
 
 
 main()

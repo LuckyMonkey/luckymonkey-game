@@ -14,7 +14,7 @@ Routers are temples, firewalls are vine gates, the database lives in a lake, and
 ![Data driven](https://img.shields.io/badge/rules-live_JSON-0ea5e9)
 ![Tests](https://img.shields.io/badge/sim_tests-14_passing-22c55e)
 ![Faults](https://img.shields.io/badge/fault_types-18-ef4444)
-![Nodes](https://img.shields.io/badge/nodes-28_on_8_islands-84cc16)
+![Nodes](https://img.shields.io/badge/nodes-33_on_11_islands-84cc16)
 
 ![The archipelago: floating islands, one river from void to void, rope links between islands](docs/img/oncall-overview.png)
 
@@ -231,7 +231,7 @@ Everything worth tuning is JSON in [`game/data/`](game/data), fetched when the p
 |---|---|
 | [`tuning.json`](game/data/tuning.json) | every fault, response, action, crew member, level, the training script, concepts, numbers |
 | [`islands.json`](game/data/islands.json) | the archipelago: islands, heights, hills, river, bridges |
-| [`nodes.json`](game/data/nodes.json) | the 28 nodes: names, emoji, connections, lore |
+| [`nodes.json`](game/data/nodes.json) | the 33 nodes: names, emoji, connections, lore |
 | `world.json` | generated from the two above by `tools/gen-world.py` |
 
 Edit, run `python3 tools/gen-world.py` (if you touched the map), copy into
@@ -247,7 +247,7 @@ docs (`tools/gen-docs.py`), and in the deep links.
 |---|---|
 | 🎮 [How to play](docs/gameplay.md) | rules, crew, levels, keys |
 | 💥 [Failure types](docs/failures.md) | all 18 faults: symptom, fix, mitigation, why (generated from the data) |
-| 🏝️ [Nodes and lore](docs/nodes.md) | every node, its island, role and story (generated) |
+| 🏝️ [Nodes and lore](docs/nodes.md) | the legend, every island and node, its role and story (generated) |
 | 🧮 [The simulation](docs/simulation.md) | the model, director, workers, tests and balancing numbers |
 | 🎯 [On-call design](docs/oncall-design.md) | why the loop works the way it does |
 | 🖥️ [Interface](docs/interface.md) | layout, phone layout, camera, deep links, Bevy UI traps |

@@ -14,9 +14,9 @@
  "lightning_range": 110,
  "lightning_chance": 0.35,
  "director": {
-  "grace": 15,
+  "grace": 25,
   "health_floor": 0.6,
-  "notice_every": 22,
+  "notice_every": 26,
   "levels": [
    {
     "name": "Practice: no pressure",
@@ -37,53 +37,53 @@
    {
     "name": "Shift 1: training",
     "tutorial": true,
-    "first": 10,
+    "first": 14,
     "interval": [
-     48,
-     34
+     70,
+     50
     ],
     "max_roots": [
      1,
      1
     ],
     "warning_share": 0.5,
-    "ttl_mult": 1.3,
+    "ttl_mult": 1.7,
     "crew": []
    },
    {
     "name": "Shift 2",
     "first": 15,
     "interval": [
-     42,
-     28
+     60,
+     42
     ],
     "max_roots": [
      1,
      2
     ],
     "warning_share": 0.45,
-    "ttl_mult": 1.1,
+    "ttl_mult": 1.45,
     "crew": []
    },
    {
     "name": "Shift 3+",
     "first": 10,
     "interval": [
-     34,
-     22
+     50,
+     34
     ],
     "max_roots": [
      1,
-     3
+     2
     ],
     "warning_share": 0.4,
-    "ttl_mult": 0.85,
+    "ttl_mult": 1.15,
     "crew": []
    }
   ],
   "cascade_at": [
-   0.66,
-   0.33
+   0.5,
+   0.2
   ]
  },
  "workers": [

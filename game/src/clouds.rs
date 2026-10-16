@@ -11,7 +11,7 @@ use bevy::prelude::*;
 use crate::world::{emoji_text, World};
 use crate::{Art, Rng};
 
-const COUNT: usize = 10;
+const COUNT: usize = 16;
 const CLOUD_Z: f32 = 300.0;
 const FLASH_SECS: f32 = 0.6;
 
@@ -74,7 +74,7 @@ fn border(w: Weather) -> Color {
 
 
 fn spawn(mut commands: Commands, world: Res<World>, art: Res<Art>, mut rng: ResMut<Rng>) {
-    let b = world.bounds;
+    let b = world.pan;
     for i in 0..COUNT {
         let weather = match i % 5 {
             0 | 2 | 4 => Weather::Fair,
@@ -82,7 +82,8 @@ fn spawn(mut commands: Commands, world: Res<World>, art: Res<Art>, mut rng: ResM
             _ => Weather::Storm,
         };
         // The old small / medium / large divs.
-        let (size, emoji_px) = [(Vec2::new(80.0, 40.0), 24.0), (Vec2::new(120.0, 55.0), 30.0), (Vec2::new(160.0, 75.0), 36.0)][rng.below(3)];
+        // Clouds sit above everything, closer to you, so they and their emoji are drawn larger.
+        let (size, emoji_px) = [(Vec2::new(100.0, 50.0), 44.0), (Vec2::new(150.0, 68.0), 56.0), (Vec2::new(200.0, 94.0), 70.0)][rng.below(3)];
         let glyph = match weather {
             Weather::Fair => "☁️",
             Weather::Rain => "🌧️",
@@ -121,7 +122,7 @@ fn spawn(mut commands: Commands, world: Res<World>, art: Res<Art>, mut rng: ResM
 }
 
 fn drift(time: Res<Time>, world: Res<World>, mut clouds: Query<(&Cloud, &mut Transform)>) {
-    let b = world.bounds;
+    let b = world.pan;
     let margin = 300.0;
     for (cloud, mut tf) in &mut clouds {
         let mut p = tf.translation.truncate() + wind() * cloud.speed * time.delta_secs();

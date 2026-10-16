@@ -4,7 +4,7 @@ title: Lucky Monkey source - main.rs
 
 # Source: game/src/main.rs
 
-**App setup: the window and canvas, shared fonts and textures (`Art`), procedural textures, the random generator, screens.** Explained in [engine](../engine.md). 207 lines. [On GitHub](https://github.com/LuckyMonkey/luckymonkey/blob/main/game/src/main.rs) (needs repo access). This page is generated from the code on every deploy by `tools/wiki-source.py`; back to the [source index](index.md).
+**App setup: the window and canvas, shared fonts and textures (`Art`), procedural textures, the random generator, screens.** Explained in [engine](../engine.md). 216 lines. [On GitHub](https://github.com/LuckyMonkey/luckymonkey/blob/main/game/src/main.rs) (needs repo access). This page is generated from the code on every deploy by `tools/wiki-source.py`; back to the [source index](index.md).
 
 ## What this file says about itself
 
@@ -322,7 +322,16 @@ fn load_art(mut commands: Commands, mut images: ResMut<Assets<Image>>, mut fonts
         vignette: vignette(&mut images),
         pill: pill(&mut images, false),
         pill_border: pill(&mut images, true),
-        grid: png(&mut images, include_bytes!("../../public/images/grid_background.png"), ImageSampler::linear()),
+        grid: png(
+            &mut images,
+            include_bytes!("../../public/images/grid_background.png"),
+            // Repeats across the backdrop mesh (world.rs: spawn_backdrop).
+            ImageSampler::Descriptor(bevy::image::ImageSamplerDescriptor {
+                address_mode_u: bevy::image::ImageAddressMode::Repeat,
+                address_mode_v: bevy::image::ImageAddressMode::Repeat,
+                ..bevy::image::ImageSamplerDescriptor::linear()
+            }),
+        ),
     });
 }
 ```

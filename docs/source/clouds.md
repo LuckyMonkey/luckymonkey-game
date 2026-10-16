@@ -4,7 +4,7 @@ title: Lucky Monkey source - clouds.rs
 
 # Source: game/src/clouds.rs
 
-**Clouds drawn like the original divs; rain; storms that flash and send lightning strikes.** Explained in [world](../world.md). 190 lines. [On GitHub](https://github.com/LuckyMonkey/luckymonkey/blob/main/game/src/clouds.rs) (needs repo access). This page is generated from the code on every deploy by `tools/wiki-source.py`; back to the [source index](index.md).
+**Clouds drawn like the original divs; rain; storms that flash and send lightning strikes.** Explained in [world](../world.md). 191 lines. [On GitHub](https://github.com/LuckyMonkey/luckymonkey/blob/main/game/src/clouds.rs) (needs repo access). This page is generated from the code on every deploy by `tools/wiki-source.py`; back to the [source index](index.md).
 
 ## What this file says about itself
 
@@ -51,7 +51,7 @@ use crate::{Art, Rng};
 ### const COUNT
 
 ```rust
-const COUNT: usize = 10;
+const COUNT: usize = 16;
 ```
 
 ### const CLOUD_Z
@@ -172,7 +172,7 @@ fn border(w: Weather) -> Color {
 
 ```rust
 fn spawn(mut commands: Commands, world: Res<World>, art: Res<Art>, mut rng: ResMut<Rng>) {
-    let b = world.bounds;
+    let b = world.pan;
     for i in 0..COUNT {
         let weather = match i % 5 {
             0 | 2 | 4 => Weather::Fair,
@@ -180,7 +180,8 @@ fn spawn(mut commands: Commands, world: Res<World>, art: Res<Art>, mut rng: ResM
             _ => Weather::Storm,
         };
         // The old small / medium / large divs.
-        let (size, emoji_px) = [(Vec2::new(80.0, 40.0), 24.0), (Vec2::new(120.0, 55.0), 30.0), (Vec2::new(160.0, 75.0), 36.0)][rng.below(3)];
+        // Clouds sit above everything, closer to you, so they and their emoji are drawn larger.
+        let (size, emoji_px) = [(Vec2::new(100.0, 50.0), 44.0), (Vec2::new(150.0, 68.0), 56.0), (Vec2::new(200.0, 94.0), 70.0)][rng.below(3)];
         let glyph = match weather {
             Weather::Fair => "☁️",
             Weather::Rain => "🌧️",
@@ -223,7 +224,7 @@ fn spawn(mut commands: Commands, world: Res<World>, art: Res<Art>, mut rng: ResM
 
 ```rust
 fn drift(time: Res<Time>, world: Res<World>, mut clouds: Query<(&Cloud, &mut Transform)>) {
-    let b = world.bounds;
+    let b = world.pan;
     let margin = 300.0;
     for (cloud, mut tf) in &mut clouds {
         let mut p = tf.translation.truncate() + wind() * cloud.speed * time.delta_secs();

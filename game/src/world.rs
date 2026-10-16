@@ -31,6 +31,8 @@ const PYRAMID_HEIGHT: f32 = 5.0;
 pub mod kind {
     pub const GRASS: u8 = 0;
     pub const WATER: u8 = 1;
+    /// Flowing lava (the water sprites, inverted and hue-shifted).
+    pub const LAVA: u8 = 2;
     pub const PLATFORM: u8 = 4;
     pub const SCORCHED: u8 = 5;
     pub const VOLCANO: u8 = 6;
@@ -52,6 +54,12 @@ pub(crate) struct WorldFile {
     /// Faint far-off islands: [x, y, radius].
     #[serde(default)]
     backdrop: Vec<[i32; 3]>,
+    /// Lava stream centrelines (Ember Isle).
+    #[serde(default)]
+    lava_streams: Vec<Vec<Pos>>,
+    /// The story of the jungle (tour, docs).
+    #[serde(default)]
+    legend: String,
 }
 
 /// A named island of the archipelago (navigation, labels).
@@ -63,6 +71,8 @@ pub struct Island {
     pub center: Pos,
     #[serde(default)]
     pub nodes: Vec<String>,
+    #[serde(default)]
+    pub lore: String,
 }
 
 #[derive(Deserialize)]
@@ -76,6 +86,8 @@ struct TileIn {
     fall: bool,
     #[serde(default)]
     lagoon: bool,
+    #[serde(default)]
+    spill: u8,
 }
 
 #[derive(Deserialize, Clone, Copy)]
@@ -127,11 +139,13 @@ pub struct Tile {
     pub fall: bool,
     /// Part of the logical lagoon (bubbles).
     pub lagoon: bool,
+    /// Pours off the island's edge into the void: 1 over its +x edge, 2 over +y.
+    pub spill: u8,
 }
 
 impl Tile {
     fn ground(kind: u8, height: f32) -> Tile {
-        Tile { kind, height, fall: false, lagoon: false }
+        Tile { kind, height, fall: false, lagoon: false, spill: 0 }
     }
 }
 
@@ -144,6 +158,11 @@ pub struct World {
     pub islands: Vec<Island>,
     /// Screen-space bounds of the whole map (Bevy coordinates, y up).
     pub bounds: Rect,
+    /// Where the camera may go: the islands and their nodes, plus a margin.
+    /// The river runs on beyond it in both directions, out of reach.
+    pub pan: Rect,
+    pub lava_streams: Vec<Vec<Pos>>,
+    pub legend: String,
 }
 
 impl World {
@@ -187,7 +206,7 @@ pub fn plugin(app: &mut App) {
     let mut tiles: HashMap<(i32, i32), Tile> = HashMap::new();
     for t in &file.tiles {
         let key = (t.x.round() as i32, t.y.round() as i32);
-        let new = Tile { kind: t.kind, height: t.height.max(0.0), fall: t.fall, lagoon: t.lagoon };
+        let new = Tile { kind: t.kind, height: t.height.max(0.0), fall: t.fall, lagoon: t.lagoon, spill: t.spill };
         tiles
             .entry(key)
             .and_modify(|old| {
@@ -249,7 +268,21 @@ pub fn plugin(app: &mut App) {
     }
     let backdrop = if file.backdrop.is_empty() { EDGE_ISLANDS.to_vec() } else { file.backdrop.iter().map(|b| (b[0], b[1], b[2])).collect() };
     app.insert_resource(Backdrop(backdrop));
-    app.insert_resource(World { tiles, nodes: file.nodes, streams: file.streams, islands: file.islands, bounds });
+    let mut pan = Rect::EMPTY;
+    for n in &file.nodes {
+        pan = pan.union_point(iso(n.position.x, n.position.y, n.position.height));
+    }
+    let pan = if pan.is_empty() { bounds } else { pan.inflate(420.0) };
+    app.insert_resource(World {
+        tiles,
+        nodes: file.nodes,
+        streams: file.streams,
+        islands: file.islands,
+        bounds,
+        pan,
+        lava_streams: file.lava_streams,
+        legend: file.legend,
+    });
     let mut decorations = file.decorations;
     decorations.extend(bank_decos);
     app.insert_resource(Decos(decorations));
@@ -297,6 +330,7 @@ fn atlas_cell(t: Tile, x: i32, y: i32) -> usize {
     let pick = |first: usize, n: usize| first + ((cell_hash(x, y) * n as f32) as usize).min(n - 1);
     match t.kind {
         kind::WATER => pick(4, 5),
+        kind::LAVA => pick(16, 5),
         kind::VOLCANO => pick(9, 5),
         kind::TEMPLE => 14,
         _ => pick(0, 4),
@@ -305,14 +339,16 @@ fn atlas_cell(t: Tile, x: i32, y: i32) -> usize {
 const WHITE_CELL: usize = 15;
 
 fn cell_uv(cell: usize) -> (Vec2, Vec2) {
+    // tiles.png: 4 columns x 6 rows of 34 px cells (make-textures.py).
     let (cx, cy) = ((cell % 4) as f32, (cell / 4) as f32);
-    let px = 1.0 / 136.0;
-    (Vec2::new((cx * 34.0 + 1.0) * px, (cy * 34.0 + 1.0) * px), Vec2::new((cx * 34.0 + 33.0) * px, (cy * 34.0 + 33.0) * px))
+    let (px, py) = (1.0 / 136.0, 1.0 / 204.0);
+    (Vec2::new((cx * 34.0 + 1.0) * px, (cy * 34.0 + 1.0) * py), Vec2::new((cx * 34.0 + 33.0) * px, (cy * 34.0 + 33.0) * py))
 }
 
 fn wall_color(kind: u8) -> Color {
     match kind {
         kind::WATER => Color::srgb(0.16, 0.36, 0.62),
+        kind::LAVA => Color::srgb(0.62, 0.20, 0.05),
         kind::VOLCANO => Color::srgb(0.48, 0.16, 0.10),
         kind::TEMPLE => Color::srgb(0.72, 0.56, 0.16),
         kind::SCORCHED => Color::srgb(0.30, 0.22, 0.17),
@@ -522,17 +558,32 @@ fn spawn_islands(mut commands: Commands, backdrop: Res<Backdrop>, mut meshes: Re
     ));
 }
 
-fn spawn_backdrop(mut commands: Commands, world: Res<World>, art: Res<Art>) {
-    let size = world.bounds.size() + Vec2::splat(4000.0);
+fn spawn_backdrop(mut commands: Commands, world: Res<World>, art: Res<Art>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>) {
+    // The void: a large, faint grid whose hue drifts from jungle green through teal
+    // and blue to violet across the map, with slow waves so it never reads as bands.
+    // One mesh with vertex colours over a repeating texture.
+    let area = Rect::from_center_size(world.bounds.center(), world.bounds.size() + Vec2::splat(4000.0));
+    const N: usize = 28;
+    const TILE: f32 = 512.0 * 3.2;
+    let mut buf = MeshBuf { pos: vec![], uv: vec![], col: vec![], idx: vec![] };
+    let hue = |p: Vec2| {
+        let t = ((p - area.min) / area.size()).clamp(Vec2::ZERO, Vec2::ONE);
+        let k = (t.x * 0.55 + (1.0 - t.y) * 0.45 + 0.08 * (t.x * 9.0).sin() * (t.y * 7.0).cos()).clamp(0.0, 1.0);
+        Color::hsla(140.0 + k * 150.0, 0.85, 0.66, 0.62)
+    };
+    for i in 0..N {
+        for j in 0..N {
+            let a = area.min + area.size() * Vec2::new(i as f32, j as f32) / N as f32;
+            let b = area.min + area.size() * Vec2::new((i + 1) as f32, (j + 1) as f32) / N as f32;
+            let v = [Vec2::new(a.x, a.y), Vec2::new(b.x, a.y), Vec2::new(b.x, b.y), Vec2::new(a.x, b.y)];
+            let uv = v.map(|p| Vec2::new(p.x / TILE, -p.y / TILE));
+            buf.quad4(v, uv, v.map(hue));
+        }
+    }
     commands.spawn((
-        Sprite {
-            image: art.grid.clone(),
-            color: Color::srgba(1.0, 1.0, 1.0, 0.35),
-            custom_size: Some(size),
-            image_mode: SpriteImageMode::Tiled { tile_x: true, tile_y: true, stretch_value: 0.6 },
-            ..default()
-        },
-        Transform::from_translation(world.bounds.center().extend(-100.0)),
+        Mesh2d(meshes.add(buf.mesh())),
+        MeshMaterial2d(materials.add(ColorMaterial::from(art.grid.clone()))),
+        Transform::from_xyz(0.0, 0.0, -100.0),
     ));
 }
 

@@ -46,7 +46,7 @@ pub fn plugin(app: &mut App) {
         .init_resource::<PointerOverUi>()
         .add_message::<ZoomBy>()
         .add_systems(Startup, spawn_camera)
-        .add_systems(Update, (mouse, touch, keys, zoom_buttons, follow).run_if(in_state(Screen::Playing)));
+        .add_systems(Update, (mouse, touch, keys, zoom_buttons, follow, clamp).chain().run_if(in_state(Screen::Playing)));
 }
 
 fn spawn_camera(mut commands: Commands, world: Res<World>, windows: Query<&Window>, mut view: ResMut<ViewState>) {
@@ -55,7 +55,7 @@ fn spawn_camera(mut commands: Commands, world: Res<World>, windows: Query<&Windo
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection { scale: 1.0 / view.zoom, ..OrthographicProjection::default_2d() }),
-        Transform::from_translation(world.bounds.center().extend(0.0)),
+        Transform::from_translation(world.pan.center().extend(0.0)),
     ));
 }
 
@@ -241,5 +241,14 @@ fn zoom_buttons(mut requests: MessageReader<ZoomBy>, window: Single<&Window>, ca
     let (mut tf, mut proj) = cam.into_inner();
     for ZoomBy(f) in requests.read() {
         zoom_about(&window, &mut tf, &mut proj, &mut view, *f, window.size() / 2.0);
+    }
+}
+
+/// Keep the camera over the islands: the river runs on past the edge of where
+/// you can pan, so it seems to come from, and go to, somewhere out of sight.
+fn clamp(world: Res<World>, mut cam: Single<&mut Transform, With<Camera2d>>) {
+    let p = cam.translation.truncate().clamp(world.pan.min, world.pan.max);
+    if p != cam.translation.truncate() {
+        cam.translation = p.extend(cam.translation.z);
     }
 }

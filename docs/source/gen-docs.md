@@ -27,7 +27,7 @@ A, C = T["actions"], T["concepts"]
 F = {k: f for k, f in T["faults"].items() if k != "upstream"}
 BYID = {n["id"]: n for n in NODES}
 # Ember and Watch sit off the river with no bridge; links reach them as ropes.
-PLACE = {"ember": "free-floating", "watch": "free-floating"}
+PLACE = {i: "free-floating" for i in ("ember", "watch", "mangrove", "reef", "heron")}
 for a, b in ISLES.get("bridges", []):
     for x, y in ((a, b), (b, a)):
         PLACE.setdefault(x, f"on the river, vine bridge to {next(i['name'] for i in ISLES['islands'] if i['id'] == y)}")
@@ -132,12 +132,14 @@ def nodes():
     out = [
         "---", "title: Lucky Monkey - nodes and lore", "---", "",
         "# Nodes and lore", "",
-        "> Twenty-eight places in the jungle, each a real kind of infrastructure, each with a story.", "",
+        "> Thirty-three places on eleven islands, each a real kind of infrastructure, each with a story.", "",
         "**Generated from [`game/data/nodes.json`](world.md) and "
         "[`islands.json`](world.md#the_archipelago) by `tools/gen-docs.py`.** In the game, "
         "press **T** (outside a shift) for the same tour, island by island, with what each node "
         "links to and how many services would lose their path if it went down.", "",
     ]
+    if ISLES.get("legend"):
+        out += ["## The legend", "", "> " + ISLES["legend"], ""]
     for isle in ISLES["islands"]:
         ids = list(isle.get("nodes", {}))
         if not ids:
@@ -145,6 +147,8 @@ def nodes():
         out += [f"## {isle['emoji']} {isle['name']}", "",
                 f"Height {isle.get('height', 0)} · {isle.get('biome', '')} · "
                 + PLACE.get(isle["id"], "on the river"), ""]
+        if isle.get("lore"):
+            out += [f"*{isle['lore']}*", ""]
         for nid in ids:
             n = BYID.get(nid)
             if not n:
@@ -159,7 +163,8 @@ def nodes():
             if role:
                 out += [f"**Role:** {role}", ""]
             if n.get("lore"):
-                out += [f"*{n['lore']}*", ""]
+                for para in n["lore"].split("\n\n"):
+                    out += [f"*{para}*", ""]
             if links:
                 out += [f"**Links to:** {links}", ""]
     out += ["Next: [Failure types](failures.md) · Back to the [documentation](index.md)", ""]

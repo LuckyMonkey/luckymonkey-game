@@ -1,5 +1,5 @@
 {
- "_about": "The archipelago. One long river falls in from the void, runs through the islands strung along it, and spills off into the void again. `bridges` lists the few island pairs joined by a vine bridge; islands off the river with no bridge float free. Edit, then `tools/deploy.sh data` (regenerates world.json, seconds). Grid: +x runs down-right on screen, +y down-left. Node offsets are relative to the island centre; a node that lands on water is nudged to the nearest bank.",
+ "_about": "The archipelago. One long river comes in from beyond the map, runs through the islands strung along it, and leaves the map again; the camera stops before its ends. `bridges` lists the few island pairs joined by a vine bridge; islands off the river with no bridge float free. Edit, then `tools/deploy.sh data` (regenerates world.json, seconds). Grid: +x runs down-right on screen, +y down-left. Node offsets are relative to the island centre; a node that lands on water is nudged to the nearest bank.",
  "seed": 8675309,
  "islands": [
   {
@@ -27,7 +27,8 @@
      -3
     ]
    },
-   "hills": 2
+   "hills": 2,
+   "lore": "The highest island, where the river first touches land. The water is still warm from wherever it fell from, and the frogs who run the lagoon greet every newcomer with an address and a lotus pad. The Message Queue Falls tumble off its western edge."
   },
   {
    "id": "canopy",
@@ -58,7 +59,8 @@
      5
     ]
    },
-   "hills": 2
+   "hills": 2,
+   "lore": "A ridge of old trees so tall that their tops hold the jungle's server racks, its northern firewall and its backup vault. Parrots nest on the warm racks; the toucan who guards the vault doesn't nest anywhere, out of principle."
   },
   {
    "id": "temple",
@@ -89,7 +91,8 @@
      4
     ]
    },
-   "hills": 1
+   "hills": 1,
+   "lore": "The heart of the network: the Guardian's pyramid, the main router on the highest ledge, the DNS Shrine and the thinking stone. Almost every path in the jungle crosses this island, which is why the monks never stop chanting."
   },
   {
    "id": "shore",
@@ -116,7 +119,8 @@
      4
     ]
    },
-   "hills": 2
+   "hills": 2,
+   "lore": "Where the river widens and slows. The Digital River runs along its banks, the southern firewall stands guard, and Node Temple Alpha has been sending packets to people who left long ago for longer than anyone can remember."
   },
   {
    "id": "banana",
@@ -147,7 +151,8 @@
      -2
     ]
    },
-   "hills": 2
+   "hills": 2,
+   "lore": "Rows of banana palms on terraces, a cache for every craving, and the Lilypad Load Balancer across the water. The grove sits on the open side of the jungle, so it's the first place a stampede arrives."
   },
   {
    "id": "lake",
@@ -178,7 +183,8 @@
      2
     ]
    },
-   "hills": 1
+   "hills": 1,
+   "lore": "Where the river spreads into a wide, still lake before running on south. Everything that floated downstream settles here; the analysts fish for patterns from the lotus beds."
   },
   {
    "id": "ember",
@@ -188,7 +194,7 @@
     6,
     40
    ],
-   "radius": 6,
+   "radius": 8,
    "height": 6,
    "biome": "volcano",
    "nodes": {
@@ -205,7 +211,8 @@
      4
     ]
    },
-   "hills": 2
+   "hills": 1,
+   "lore": "A volcano island that drifted off on its own. It runs the fastest processor in the jungle and the strangest machine, and it's connected to the rest only by long ropes across the void."
   },
   {
    "id": "watch",
@@ -232,7 +239,76 @@
      3
     ]
    },
-   "hills": 2
+   "hills": 2,
+   "lore": "A rock with a tower on it, floating alone to the east, from which the heron can see every island at once and every storm forming over the void."
+  },
+  {
+   "id": "mangrove",
+   "name": "Mangrove Hollow",
+   "emoji": "🌿",
+   "center": [
+    33,
+    53
+   ],
+   "radius": 4,
+   "height": 3,
+   "biome": "jungle",
+   "nodes": {
+    "mangrove-backup": [
+     -1,
+     0
+    ],
+    "tide-queue": [
+     2,
+     2
+    ]
+   },
+   "hills": 1,
+   "lore": "A floating thicket of mangrove roots south-west of the lake, where the off-site backups are woven in and the crabs batch the night's work in tide pools."
+  },
+  {
+   "id": "reef",
+   "name": "Firefly Reef",
+   "emoji": "✨",
+   "center": [
+    44,
+    67
+   ],
+   "radius": 4,
+   "height": 2,
+   "biome": "jungle",
+   "nodes": {
+    "firefly-logs": [
+     -1,
+     -1
+    ],
+    "reef-cache": [
+     2,
+     1
+    ]
+   },
+   "hills": 1,
+   "lore": "A glowing coral reef drifting beside the river. Every log line in the jungle ends up here as a firefly, and the southern cache grows from the coral."
+  },
+  {
+   "id": "heron",
+   "name": "Heron Rock",
+   "emoji": "🪶",
+   "center": [
+    56,
+    79
+   ],
+   "radius": 3,
+   "height": 4,
+   "biome": "jungle",
+   "nodes": {
+    "heron-relay": [
+     0,
+     0
+    ]
+   },
+   "hills": 1,
+   "lore": "The last rock before the river leaves the map. A single relay, a single heron, and a long rope back to the lake."
   }
  ],
  "bridges": [
@@ -267,6 +343,16 @@
   {
    "name": "main",
    "points": [
+    [
+     -69,
+     -67,
+     11
+    ],
+    [
+     -39,
+     -37,
+     11
+    ],
     [
      -9,
      -7,
@@ -321,6 +407,47 @@
      63,
      63,
      0
+    ],
+    [
+     70,
+     72,
+     0
+    ],
+    [
+     84,
+     86,
+     0
+    ],
+    [
+     124,
+     126,
+     0
+    ]
+   ]
+  },
+  {
+   "name": "lava",
+   "kind": "lava",
+   "points": [
+    [
+     7,
+     41,
+     11
+    ],
+    [
+     9,
+     43,
+     9
+    ],
+    [
+     10,
+     45,
+     8
+    ],
+    [
+     11,
+     46,
+     7
     ]
    ]
   }
@@ -328,5 +455,63 @@
  "islets": 12,
  "bridge_kind": 4,
  "deco_density": 0.14,
- "islet_max_height": 9
+ "islet_max_height": 9,
+ "legend": "Long before the cables, a river fell out of the sky. Nobody has seen where it comes from: it pours in from the void above the highest island and runs on, past the Data Lake and the southern reefs, until it leaves the map again into the dark. Islands drifted along it like leaves, and the animals who lived on them learned to talk across the water, first with shouts, then with vines, and finally with frames that ride the current. Every island has its job, and every job depends on the others. When one breaks, the river carries the trouble downstream. That's why the jungle keeps an on-call crew.",
+ "spills": [
+  {
+   "river": "lava",
+   "near": [
+    11,
+    46
+   ],
+   "dir": [
+    0,
+    1
+   ]
+  },
+  {
+   "river": "main",
+   "near": [
+    6,
+    8
+   ],
+   "dir": [
+    1,
+    0
+   ]
+  },
+  {
+   "river": "main",
+   "near": [
+    25,
+    24
+   ],
+   "dir": [
+    0,
+    1
+   ]
+  },
+  {
+   "river": "main",
+   "near": [
+    33,
+    32
+   ],
+   "dir": [
+    1,
+    0
+   ]
+  },
+  {
+   "river": "main",
+   "near": [
+    52,
+    53
+   ],
+   "dir": [
+    0,
+    1
+   ]
+  }
+ ]
 }

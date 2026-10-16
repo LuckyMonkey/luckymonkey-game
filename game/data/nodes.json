@@ -22,7 +22,7 @@
     "memetic_defense_v3.sys",
     "avatar_config.json"
    ],
-   "lore": "Carved by the first sysadmins from a single block of jade, the Guardian sits at the top of the pyramid and watches every packet with half-closed eyes. Monkeys leave a banana at its feet before every deploy. Nobody admits to believing it helps."
+   "lore": "Carved by the first sysadmins from a single block of jade, the Guardian sits at the top of the pyramid and watches every packet with half-closed eyes. Monkeys leave a banana at its feet before every deploy. Nobody admits to believing it helps.\n\nUnder its base runs the oldest cable in the jungle, laid by hand and never replaced, because nobody can agree who would have to move the statue. Four paths meet at its feet, which is why the first thing anyone does in an outage is look up at the Guardian. On-call note: it's a hub. When it struggles, the lagoon, the bananas, the temple and the volcano all feel it."
   },
   {
    "id": "logical-lagoon",
@@ -43,7 +43,7 @@
     "lotus_protocol.bin",
     "static_frog.gif"
    ],
-   "lore": "The river slows here into a warm pool where APIs float on lotus pads. The frogs say the water remembers every request ever made of it. They also hand out addresses to anything new that splashes in."
+   "lore": "The river slows here into a warm pool where APIs float on lotus pads. The frogs say the water remembers every request ever made of it. They also hand out addresses to anything new that splashes in.\n\nLong before the cables, this was where the first animals met to trade. The lagoon still hands every newcomer an address, a name tag for the water, and lends it back when they leave. On-call note: when new devices can't join, look here first. Running out of addresses looks a lot like everything else breaking."
   },
   {
    "id": "digital-river",
@@ -64,7 +64,7 @@
     "ping_monitor.log",
     "rapids_config.json"
    ],
-   "lore": "A fast, shallow channel that carries raw signal from the lagoon to the shore. On calm days you can see the frames glinting under the surface like minnows."
+   "lore": "A fast, shallow channel that carries raw signal from the lagoon to the shore. On calm days you can see the frames glinting under the surface like minnows.\n\nThe river was here before the network, and the network learned to float on it. The channel is shallow enough that a careless deploy can stir up the mud for miles. On-call note: a segment, not a server. It carries traffic for everyone downstream, so its trouble travels."
   },
   {
    "id": "banana-sector",
@@ -85,7 +85,7 @@
     "humor_algorithm.js",
     "banana_manifest.json"
    ],
-   "lore": "Every banana the jungle has ever needed twice is kept here, ripe and ready, so nobody has to climb to the archive again. When it forgets one, the whole jungle notices the walk."
+   "lore": "Every banana the jungle has ever needed twice is kept here, ripe and ready, so nobody has to climb to the archive again. When it forgets one, the whole jungle notices the walk.\n\nThe cache was built after the Great Walk, the week the archive was slow and every monkey had to climb for every banana. Nobody wants another Great Walk. On-call note: it sits on the open edge of the grove, so it's the first thing stampedes find."
   },
   {
    "id": "node-temple-1",
@@ -106,7 +106,7 @@
     "maintenance_routines.sys",
     "temple_history.txt"
    ],
-   "lore": "The older of the two temples, built before anyone wrote things down. Ghostpackets still sweep its halls at night, delivering messages addressed to people who left long ago."
+   "lore": "The older of the two temples, built before anyone wrote things down. Ghostpackets still sweep its halls at night, delivering messages addressed to people who left long ago.\n\nThe walls are carved with routing tables in a script that predates the shrine. Scholars argue about whether the carvings describe the network or caused it. On-call note: old, trusted and well connected, which is exactly how worms like their temples."
   },
   {
    "id": "node-temple-2",
@@ -127,7 +127,7 @@
     "deeper_sector_map.dat",
     "ancient_symbols.svg"
    ],
-   "lore": "Its door opens only for a hash nobody remembers choosing. The priests keep a backup of the hash on a stone tablet in the vault, which is locked with the same hash."
+   "lore": "Its door opens only for a hash nobody remembers choosing. The priests keep a backup of the hash on a stone tablet in the vault, which is locked with the same hash.\n\nBeta was built as a copy of Alpha so that one temple could always be awake. It drifted. Nobody remembers when the two stopped agreeing about which day it is. On-call note: if something here won't open, check its certificate before blaming the hash."
   },
   {
    "id": "crashed-sector",
@@ -148,7 +148,7 @@
     "ghostpacket_traces.bin",
     "crash_report.json"
    ],
-   "lore": "Something fell out of the sky here once and never booted again. The monkeys keep it around as a reminder to take backups."
+   "lore": "Something fell out of the sky here once and never booted again. The monkeys keep it around as a reminder to take backups.\n\nSome say it was a satellite. Some say it was a deploy on a Friday. Either way, the crater is now the jungle's favourite place to remember why rollbacks exist. On-call note: it still answers ping, it just never does anything else. A machine can be up while its service is dead."
   },
   {
    "id": "server-hub",
@@ -168,7 +168,7 @@
     "terminal_output.txt",
     "processing_algorithms.js"
    ],
-   "lore": "Rows of humming racks under the canopy, warm enough that the parrots nest on top of them in the rainy season. Most of the jungle's work actually happens here."
+   "lore": "Rows of humming racks under the canopy, warm enough that the parrots nest on top of them in the rainy season. Most of the jungle's work actually happens here.\n\nThe racks are named after fruit, and the fruit after the racks; after a while nobody could say which came first. The parrots have learned the fans' songs and sing along when one starts to fail. On-call note: most real work runs here, so a leak or a crash here is felt everywhere downstream."
   },
   {
    "id": "main-router",
@@ -190,7 +190,7 @@
     "signal_distribution.bin",
     "router_config.json"
    ],
-   "lore": "Perched on the highest ledge of Temple Isle, the router knows a path to every island. If it goes quiet, the islands can still see each other across the void but have no way to talk."
+   "lore": "Perched on the highest ledge of Temple Isle, the router knows a path to every island. If it goes quiet, the islands can still see each other across the void but have no way to talk.\n\nIts routing table is written on a scroll so long it's kept on a spindle, and the monkeys turn it by hand at night. A single wrong line can send every packet on the shore in circles. On-call note: the core. Almost every path in the jungle crosses it, so when it goes down, whole islands go dark at once."
   },
   {
    "id": "firewall-north",
@@ -211,7 +211,7 @@
     "traffic_logs.txt",
     "security_protocols.json"
    ],
-   "lore": "A wall of thorny vines that lets the right traffic through and stings everything else. It runs rules written so long ago that nobody dares delete one."
+   "lore": "A wall of thorny vines that lets the right traffic through and stings everything else. It runs rules written so long ago that nobody dares delete one.\n\nVines grow over old vines; rules sit on top of older rules. Once a year someone proposes cleaning it up, and once a year the proposal is gently returned unread. On-call note: when a stampede hits, this is where an ACL turns away the attackers and lets the real visitors through."
   },
   {
    "id": "firewall-south",
@@ -231,7 +231,7 @@
     "defense_patterns.bin",
     "security_breach_history.json"
    ],
-   "lore": "The southern wall is younger and stricter. It checks every packet twice, which the southern islanders call security and everyone else calls slow."
+   "lore": "The southern wall is younger and stricter. It checks every packet twice, which the southern islanders call security and everyone else calls slow.\n\nIt was planted after a worm walked in through the shore one quiet Sunday. The southern islanders have never quite forgiven the north for leaving the gate open. On-call note: strict is good, but a strict wall on the wrong VLAN blocks your own traffic too."
   },
   {
    "id": "database-cluster",
@@ -251,7 +251,7 @@
     "storage_index.bin",
     "access_logs.txt"
    ],
-   "lore": "Three stone towers that hold the same records, so losing one never loses a record. Keeping the three in agreement is a full-time job for a very patient sloth."
+   "lore": "Three stone towers that hold the same records, so losing one never loses a record. Keeping the three in agreement is a full-time job for a very patient sloth.\n\nThe three towers are called Yes, Also Yes and Probably, after how often they agree. The sloth keeps a ledger of every disagreement in his own neat handwriting. On-call note: when replicas drift, resync from the primary. Guessing which tower is right is how data gets lost."
   },
   {
    "id": "volcano-core",
@@ -271,7 +271,7 @@
     "heat_resistant_protocols.bin",
     "lava_flow_control.json"
    ],
-   "lore": "The fastest processor in the jungle runs inside a live volcano, cooled by the river and good intentions. It throttles itself whenever the leaves pile up on the vents."
+   "lore": "The fastest processor in the jungle runs inside a live volcano, cooled by the river and good intentions. It throttles itself whenever the leaves pile up on the vents.\n\nNobody chose to put a processor inside a volcano; it just ran faster there, and nobody wanted to be the one to move it. The lava keeps it warm, and the river keeps it alive. On-call note: heat is a hardware problem. Restarting a hot machine buys minutes; clearing the vents fixes it."
   },
   {
    "id": "ai-core-01",
@@ -291,7 +291,7 @@
     "thought_patterns.dat",
     "simulation_core.sys"
    ],
-   "lore": "A thinking stone that sorts the jungle's problems by how weird they are. It once predicted a disk would fill on a Tuesday. It was a Wednesday, but everyone was impressed."
+   "lore": "A thinking stone that sorts the jungle's problems by how weird they are. It once predicted a disk would fill on a Tuesday. It was a Wednesday, but everyone was impressed.\n\nIt sorts problems by smell, mostly. Its favourite word is 'anomaly', and it uses it about twice a minute. On-call note: memory leaks love long-running thinkers. A restart helps for a while; the patch helps for good."
   },
   {
    "id": "vault-01",
@@ -311,7 +311,7 @@
     "recovery_logic.dat",
     "archive_index.sys"
    ],
-   "lore": "The backups live here, behind three doors and one very suspicious toucan. A backup nobody has ever restored is just a hope, so the toucan restores one every Friday."
+   "lore": "The backups live here, behind three doors and one very suspicious toucan. A backup nobody has ever restored is just a hope, so the toucan restores one every Friday.\n\nThe toucan has never lost a backup and has never once been thanked, which is how backup work usually goes. The vault door is carved with the date of the last successful restore. On-call note: snapshots pile up. Prune them before the disk fills, not after."
   },
   {
    "id": "switch-01",
@@ -331,7 +331,7 @@
     "connection_map.dat",
     "signal_logs.sys"
    ],
-   "lore": "Every cable on the shore meets at this junction, where a switch decides which port each frame goes out of. Plug two of its ports into each other and the frames chase themselves forever."
+   "lore": "Every cable on the shore meets at this junction, where a switch decides which port each frame goes out of. Plug two of its ports into each other and the frames chase themselves forever.\n\nEvery frame on the shore passes through here, and the switch remembers which port every animal lives behind. It forgets the moment the power blinks, and then it has to ask everyone again. On-call note: loops and broadcast storms start at switches; Spanning Tree is the cure."
   },
   {
    "id": "banana-cache-01",
@@ -351,7 +351,7 @@
     "joke_database.dat",
     "banana_manifest.sys"
    ],
-   "lore": "A small cache of jokes the monkeys tell during long outages. It is surprisingly critical infrastructure."
+   "lore": "A small cache of jokes the monkeys tell during long outages. It is surprisingly critical infrastructure.\n\nIts contents are classified, mostly because they're not very good. During the Long Night of the DNS Outage, it served eleven thousand jokes and kept morale exactly where it needed to be. On-call note: small things matter more than they look during a long incident."
   },
   {
    "id": "terminal-01",
@@ -370,7 +370,7 @@
     "bootword_list.dat",
     "access_codes.sys"
    ],
-   "lore": "An old green-screen terminal at the end of the lake path. Its commands still work, mostly, as long as you type them in capital letters."
+   "lore": "An old green-screen terminal at the end of the lake path. Its commands still work, mostly, as long as you type them in capital letters.\n\nIts keyboard is missing the letter Q, so every command involving a queue is typed with a sigh. It has outlived three replacements, each of which crashed first. On-call note: a classic first incident. The process died, the machine didn't. Restart it."
   },
   {
    "id": "quantum-nexus",
@@ -390,7 +390,7 @@
     "observation_effects.log",
     "uncertainty_calculations.js"
    ],
-   "lore": "An experimental machine on Ember Isle that is both running and not running until someone checks. The on-call monkey would rather it just picked one."
+   "lore": "An experimental machine on Ember Isle that is both running and not running until someone checks. The on-call monkey would rather it just picked one.\n\nIt arrived in a crate labelled THIS WAY UP on every side. The research frogs say it's the future. The on-call monkeys say the future keeps paging them at three in the morning. On-call note: experimental machines run hot and leak memory. Watch them."
   },
   {
    "id": "data-archive",
@@ -410,7 +410,7 @@
     "pre_digital_artifacts.sys",
     "binary_preservation.log"
    ],
-   "lore": "The deepest storage in the jungle: every log, every snapshot, every version of every banana count. It fills up slowly and then all at once."
+   "lore": "The deepest storage in the jungle: every log, every snapshot, every version of every banana count. It fills up slowly and then all at once.\n\nThe archive is so deep that the oldest records are in a format nobody can read anymore, kept on the off chance someone learns. Its librarian is a tortoise who has never been in a hurry and never lost a page. On-call note: disks fill slowly and then all at once. A warning here is a gift."
   },
   {
    "id": "lizard-node",
@@ -430,7 +430,7 @@
     "scale_pattern.dat",
     "sun_basking.sys"
    ],
-   "lore": "A cold-blooded monitor that lies very still on a warm rock and notices everything. It reports nothing until it is sure, which is either wisdom or laziness."
+   "lore": "A cold-blooded monitor that lies very still on a warm rock and notices everything. It reports nothing until it is sure, which is either wisdom or laziness.\n\nThe lizard sees traffic as warmth: busy links glow, quiet ones go cold. It has noticed every outage in history about four seconds before everyone else, and told nobody. On-call note: the lagoon's segment runs through here; address trouble on the lagoon reaches it first."
   },
   {
    "id": "data-lake",
@@ -452,7 +452,7 @@
     "replica_b.dat",
     "replica_c.dat"
    ],
-   "lore": "Where the river finally stops. Every frame that ever flowed downstream settles here, and the analysts fish for patterns from the shore."
+   "lore": "Where the river finally stops. Every frame that ever flowed downstream settles here, and the analysts fish for patterns from the shore.\n\nEvery frame that ever ran downstream ends here, which makes the lake the most honest place in the jungle: whatever the logs upstream say, the lake knows what actually happened. On-call note: the lake is where the river's trouble collects, and where the new islands to the south and west tie in."
   },
   {
    "id": "dns-shrine",
@@ -474,7 +474,7 @@
     "resolver.sys",
     "ttl_prayers.log"
    ],
-   "lore": "Monks chant the names of every island and the numbers they stand for. Visitors ask for a name and leave with a number. When the monks forget, nobody can find anything."
+   "lore": "Monks chant the names of every island and the numbers they stand for. Visitors ask for a name and leave with a number. When the monks forget, nobody can find anything.\n\nThe monks have chanted without a break for as long as the jungle has had names. Visitors who ask for a name that doesn't exist get a polite bow and a NXDOMAIN. On-call note: when names stop working but numbers still do, it's always the shrine. Its neighbours fall quiet one by one when it stumbles."
   },
   {
    "id": "lb-lilypads",
@@ -495,7 +495,7 @@
     "pool_members.json",
     "health_checks.log"
    ],
-   "lore": "Frames cross the river by hopping pad to pad. The pads take turns carrying them, so no single pad sinks under the weight."
+   "lore": "Frames cross the river by hopping pad to pad. The pads take turns carrying them, so no single pad sinks under the weight.\n\nThe pads are rotated every morning by a family of frogs, who take the job very seriously. One pad, Number Seven, is everyone's favourite and is never allowed to carry more than its share. On-call note: a load balancer in front of a stampede takes the hit first. Block the source, don't sink the pads."
   },
   {
    "id": "mq-falls",
@@ -516,7 +516,7 @@
     "dead_letters.log",
     "consumers.json"
    ],
-   "lore": "Messages queue in the pool at the top of the falls and drop one at a time, in order, so nothing downstream gets swamped."
+   "lore": "Messages queue in the pool at the top of the falls and drop one at a time, in order, so nothing downstream gets swamped.\n\nMessages wait their turn in the pool and drop over the edge one by one. When the falls jam, the pool rises, and the whole lagoon hears about it. On-call note: queues smooth out bursts, until they fill. Then everything upstream backs up."
   },
   {
    "id": "watchtower",
@@ -537,7 +537,7 @@
     "alert_rules.yml",
     "pager.log"
    ],
-   "lore": "A lonely tower on a floating rock, its telescope pointed at every island at once. It sees trouble coming: expiring certificates, scheduled deploys, filling disks."
+   "lore": "A lonely tower on a floating rock, its telescope pointed at every island at once. It sees trouble coming: expiring certificates, scheduled deploys, filling disks.\n\nThe keeper is a heron who has not blinked since the last major outage. From the tower you can see storms forming over the void hours before they arrive. On-call note: while it's reachable, you see warnings before they turn into incidents. Lose it and you're flying blind."
   },
   {
    "id": "auth-gate",
@@ -559,7 +559,7 @@
     "sessions.dat",
     "policy.json"
    ],
-   "lore": "A carved gate where every visitor shows their papers. It also keeps the certificates the rest of the jungle trusts, which makes it a very popular target."
+   "lore": "A carved gate where every visitor shows their papers. It also keeps the certificates the rest of the jungle trusts, which makes it a very popular target.\n\nThe gate's carvings change every year, when the certificates are renewed in a small ceremony nobody likes to miss. The one year somebody did miss it is still talked about. On-call note: an expired certificate here breaks every login in the jungle at once. Renew it before it expires."
   },
   {
    "id": "cdn-canopy",
@@ -579,7 +579,100 @@
     "edge_cache.bin",
     "purge_requests.log"
    ],
-   "lore": "Copies of the most popular bananas, cached high in the treetops by the delta, so visitors never have to wait for the trip upstream."
+   "lore": "Copies of the most popular bananas, cached high in the treetops by the delta, so visitors never have to wait for the trip upstream.\n\nThe highest branches of the delta hold copies of everything the jungle's visitors ask for most. The monkeys who climb up to refresh them get the best view in the jungle and the worst commute. On-call note: the edge. Stampedes and bad deploys reach it first."
+  },
+  {
+   "id": "mangrove-backup",
+   "name": "Mangrove Backup Roots",
+   "type": "vault",
+   "ipAddress": "10.40.0.10",
+   "emoji": "🌿",
+   "description": "Off-site backups, tangled into the mangrove roots on a floating island south of the lake.",
+   "connections": [
+    "data-lake",
+    "tide-queue"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "roots_snapshot_2026.tar",
+    "restore_drill.md",
+    "tide_tables.csv"
+   ],
+   "lore": "After the Long Night of the DNS Outage, the elders decided the jungle's backups shouldn't all live in the vault on Canopy Ridge. A copy was carried downriver and woven into the roots of a floating mangrove, where floods can't reach it and fire can't burn it.\n\nThe crabs who keep it are fond of saying that a backup in the same place as the original is just a second copy of the same bad day. On-call note: off-site backups only matter if they're tested and the disk isn't full. Prune the old ones."
+  },
+  {
+   "id": "tide-queue",
+   "name": "Tide Pool Queue",
+   "type": "queue",
+   "ipAddress": "10.40.0.20",
+   "emoji": "🦀",
+   "description": "Batches the lake's overnight jobs and releases them with the tide.",
+   "connections": [
+    "firewall-south",
+    "firefly-logs"
+   ],
+   "status": "online",
+   "securityLevel": 2,
+   "assets": [
+    "tide_jobs.queue",
+    "ebb_flow.conf"
+   ],
+   "lore": "Work that can wait is left in the tide pools, and the crabs carry it out to the reef when the water turns. The lake's analysts send their heaviest questions here at dusk and find the answers waiting at dawn.\n\nOn-call note: when the pool backs up, everything that writes to it backs up with it. A queue hides a slow consumer, until it doesn't."
+  },
+  {
+   "id": "firefly-logs",
+   "name": "Firefly Log Reef",
+   "type": "database",
+   "ipAddress": "10.41.0.5",
+   "emoji": "✨",
+   "description": "Every log line in the jungle, glowing on a reef at night.",
+   "connections": [
+    "reef-cache"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "reef_logs_2026-10.db",
+    "glow_index.idx"
+   ],
+   "lore": "Each firefly carries one log line, and the reef glows brighter the busier the jungle has been. On bad nights the whole reef lights up like a festival, and the on-call monkeys watch it from the lake and wince.\n\nOn-call note: logs grow faster than anyone budgets for, and a full disk stops writes. The reef's replica falls behind when the tide is high; resync it from the primary, never the other way round."
+  },
+  {
+   "id": "reef-cache",
+   "name": "Coral Edge Cache",
+   "type": "banana-cache",
+   "ipAddress": "10.41.0.9",
+   "emoji": "🪸",
+   "description": "A small edge cache for the southern islands, grown out of coral.",
+   "connections": [
+    "heron-relay"
+   ],
+   "status": "online",
+   "securityLevel": 2,
+   "assets": [
+    "coral_cache.bin",
+    "southern_hits.csv"
+   ],
+   "lore": "The southern islands are far from the delta, so they grew their own cache, one coral polyp at a time. It holds the bananas the south asks for most and almost nothing else.\n\nOn-call note: being far from everything makes it a quiet target, until a stampede notices it."
+  },
+  {
+   "id": "heron-relay",
+   "name": "Heron Relay",
+   "type": "switch",
+   "ipAddress": "10.42.0.1",
+   "emoji": "🪶",
+   "description": "The last switch before the river leaves the map, on a lonely rock.",
+   "connections": [
+    "data-lake"
+   ],
+   "status": "online",
+   "securityLevel": 2,
+   "assets": [
+    "heron_ports.conf",
+    "far_shore.map"
+   ],
+   "lore": "The heron stands on one leg on the last rock before the river leaves the known jungle, passing frames between the southern islands and the lake. She says she has seen where the river goes. She has never said where that is.\n\nOn-call note: a switch at the end of a long rope. Loops and wrong VLANs here cut off the whole southern chain."
   }
  ]
 }

@@ -1,20 +1,50 @@
 #!/usr/bin/env python3
 """Bake the Bevy game's textures into game/assets/ (run from the repo root).
 
-tiles.png  - 4x4 atlas of the 32px tile sprites, each cell padded 1px by edge
-             extension so diamond UVs never bleed; cell 15 is plain white (walls).
+tiles.png  - 4x6 atlas of the 32px tile sprites, each cell padded 1px by edge
+             extension so diamond UVs never bleed; cell 15 is plain white (walls);
+             cells 16-20 are flowing lava: the five water sprites inverted (blue
+             becomes orange) and hue-shifted toward red, so lava matches the water.
 card.png / card_border.png - node card fill + outline at 2x (160px, radius 16).
 """
 from PIL import Image, ImageDraw
+
+
+def lava(src):
+    """Water -> lava: invert (blue turns orange), then map the inverted brightness
+    onto a lava ramp, deep red to orange to yellow, contrast stretched per sprite."""
+    out = src.copy()
+    px = out.load()
+    inv = {}
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a:
+                inv[x, y] = (0.299 * (255 - r) + 0.587 * (255 - g) + 0.114 * (255 - b)) / 255
+    lo, hi = min(inv.values()), max(inv.values())
+    ramp = [(0.0, (150, 30, 10)), (0.4, (224, 78, 16)), (0.75, (250, 140, 24)), (1.0, (255, 226, 110))]
+    for (x, y), v in inv.items():
+        t = (v - lo) / max(1e-6, hi - lo)
+        for (t0, c0), (t1, c1) in zip(ramp, ramp[1:]):
+            if t <= t1:
+                k = (t - t0) / (t1 - t0)
+                px[x, y] = tuple(int(c0[n] + (c1[n] - c0[n]) * k) for n in range(3)) + (px[x, y][3],)
+                break
+    return out
 
 TILES = ["grass1", "grass2", "grass3", "grass4",
          "water", "water1", "water3", "water4", "water5",
          "lava1", "lava2", "lava3", "lava4", "lava_tile", "temple_tile"]
 CELL = 34
-atlas = Image.new("RGBA", (CELL * 4, CELL * 4), (0, 0, 0, 0))
-for i, name in enumerate(TILES + ["white"]):
-    src = Image.new("RGBA", (32, 32), (255, 255, 255, 255)) if name == "white" else \
-        Image.open(f"public/sprites/{name}.png").convert("RGBA")
+WATER = ["water", "water1", "water3", "water4", "water5"]
+atlas = Image.new("RGBA", (CELL * 4, CELL * 6), (0, 0, 0, 0))
+for i, name in enumerate(TILES + ["white"] + ["lava:" + w for w in WATER]):
+    if name == "white":
+        src = Image.new("RGBA", (32, 32), (255, 255, 255, 255))
+    elif name.startswith("lava:"):
+        src = lava(Image.open(f"public/sprites/{name[5:]}.png").convert("RGBA"))
+    else:
+        src = Image.open(f"public/sprites/{name}.png").convert("RGBA")
     padded = src.resize((34, 34), Image.NEAREST)  # placeholder size
     padded.paste(src.crop((0, 0, 32, 1)).resize((32, 1)), (1, 0))
     padded.paste(src.crop((0, 31, 32, 32)), (1, 33))

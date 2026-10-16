@@ -4,7 +4,7 @@ title: Lucky Monkey source - view.rs
 
 # Source: game/src/view.rs
 
-**The camera: pan, zoom, touch, picking nodes, following, deep-link zoom.** Explained in [interface](../interface.md). 245 lines. [On GitHub](https://github.com/LuckyMonkey/luckymonkey/blob/main/game/src/view.rs) (needs repo access). This page is generated from the code on every deploy by `tools/wiki-source.py`; back to the [source index](index.md).
+**The camera: pan, zoom, touch, picking nodes, following, deep-link zoom.** Explained in [interface](../interface.md). 254 lines. [On GitHub](https://github.com/LuckyMonkey/luckymonkey/blob/main/game/src/view.rs) (needs repo access). This page is generated from the code on every deploy by `tools/wiki-source.py`; back to the [source index](index.md).
 
 ## What this file says about itself
 
@@ -34,6 +34,7 @@ tap a node to select it.
 | [fn touch](#fn_touch) |  |
 | [fn keys](#fn_keys) |  |
 | [fn zoom_buttons](#fn_zoom_buttons) |  |
+| [fn clamp](#fn_clamp) | Keep the camera over the islands: the river runs on past the edge of where |
 
 ## Imports
 
@@ -121,7 +122,7 @@ pub fn plugin(app: &mut App) {
         .init_resource::<PointerOverUi>()
         .add_message::<ZoomBy>()
         .add_systems(Startup, spawn_camera)
-        .add_systems(Update, (mouse, touch, keys, zoom_buttons, follow).run_if(in_state(Screen::Playing)));
+        .add_systems(Update, (mouse, touch, keys, zoom_buttons, follow, clamp).chain().run_if(in_state(Screen::Playing)));
 }
 ```
 
@@ -134,7 +135,7 @@ fn spawn_camera(mut commands: Commands, world: Res<World>, windows: Query<&Windo
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection { scale: 1.0 / view.zoom, ..OrthographicProjection::default_2d() }),
-        Transform::from_translation(world.bounds.center().extend(0.0)),
+        Transform::from_translation(world.pan.center().extend(0.0)),
     ));
 }
 ```
@@ -363,6 +364,19 @@ fn zoom_buttons(mut requests: MessageReader<ZoomBy>, window: Single<&Window>, ca
     let (mut tf, mut proj) = cam.into_inner();
     for ZoomBy(f) in requests.read() {
         zoom_about(&window, &mut tf, &mut proj, &mut view, *f, window.size() / 2.0);
+    }
+}
+```
+
+### fn clamp
+
+Keep the camera over the islands: the river runs on past the edge of where you can pan, so it seems to come from, and go to, somewhere out of sight.
+
+```rust
+fn clamp(world: Res<World>, mut cam: Single<&mut Transform, With<Camera2d>>) {
+    let p = cam.translation.truncate().clamp(world.pan.min, world.pan.max);
+    if p != cam.translation.truncate() {
+        cam.translation = p.extend(cam.translation.z);
     }
 }
 ```

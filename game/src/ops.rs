@@ -1035,7 +1035,7 @@ fn spawn_hud(mut commands: Commands, art: Res<Art>, game: Res<Game>, windows: Qu
         });
     // Tour card.
     commands
-        .spawn((Node { position_type: PositionType::Absolute, bottom: px(56), left: px(12), right: px(12), max_width: px(380), ..default() }, GlobalZIndex(46)))
+        .spawn((Node { position_type: PositionType::Absolute, bottom: px(56), left: px(12), right: px(12), max_width: px(440), ..default() }, GlobalZIndex(46)))
         .with_children(|c| {
             c.spawn((
                 TourCard,
@@ -1148,8 +1148,19 @@ fn tour_card(game: Res<Game>, world: Res<World>, mut card: Single<&mut Node, Wit
             k => format!("If it goes down, {k} other service(s) lose their path to the core router."),
         }
     };
+    // The legend opens the tour; each island's story greets you on its first node.
+    let first_here = i == 0 || world.nodes[game.tour_order[i - 1]].island != n.island;
+    let mut story = String::new();
+    if i == 0 && !world.legend.is_empty() {
+        story += &format!("📜 {}\n\n", world.legend);
+    }
+    if first_here {
+        if let Some(x) = world.islands.iter().find(|x| x.id == n.island).filter(|x| !x.lore.is_empty()) {
+            story += &format!("{} {}: {}\n\n", x.emoji, x.name, x.lore);
+        }
+    }
     let s = format!(
-        "🧭 NETWORK TOUR {}/{} · {isl}\n{} {} ({})\n{role}\nLinks to: {}\n{impact}\n\n→ / Space: next   ← back   Esc: end the tour",
+        "{story}🧭 NETWORK TOUR {}/{} · {isl}\n{} {} ({})\n{role}\nLinks to: {}\n{impact}\n\n→ / Space: next   ← back   Esc: end the tour",
         i + 1,
         game.tour_order.len(),
         n.emoji,
