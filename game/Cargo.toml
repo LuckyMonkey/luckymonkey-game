@@ -1,0 +1,33 @@
+[package]
+name = "luckymonkey"
+version = "0.3.0"
+edition = "2024"
+description = "Lucky Monkey - isometric jungle network, Bevy port (web build)"
+publish = false
+
+[dependencies]
+bevy = { version = "0.20", default-features = false, features = [
+  "default_app", "std", "web", "webgl2", "bevy_winit", "default_font",
+  "2d_api", "2d_bevy_render", "ui_api", "ui_bevy_render",
+  "png", "mouse", "touch", "keyboard",
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rand = { version = "0.9", default-features = false, features = ["small_rng", "std"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
+# Deep links read the URL hash (link.rs); data.rs reads the fetched JSON.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", features = ["Window", "Location", "Storage"] }
+# Live data: data.rs reads window.LM_DATA (fetched JSON) at startup.
+js-sys = "0.3"
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev.package."*"]
+opt-level = 2

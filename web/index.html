@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lucky Monkey</title>
+<link rel="icon" href="icon.svg">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; outline: none; }
+  #boot { position: fixed; inset: 0; display: grid; place-items: center; color: #4ade80; font: 14px monospace; }
+</style>
+</head>
+<body>
+<div id="boot">🐵 Generating world…</div>
+<canvas id="lm-canvas" style="touch-action:none"></canvas>
+<script type="module">
+// Standalone host for the game (the same steps as app/page.tsx): fetch the live
+// JSON data, leave it on window.LM_DATA for game/src/data.rs, start the wasm.
+// Build into ./game with tools/build-web.sh, then serve this folder statically.
+const load = n => fetch(`game/data/${n}.json`, { cache: "no-cache" }).then(r => r.ok ? r.text() : null).catch(() => null);
+window.LM_DATA = Object.fromEntries(await Promise.all(["world", "npcs", "tuning"].map(async n => [n, await load(n)])));
+const game = await import("./game/luckymonkey.js");
+document.getElementById("boot").remove();
+try {
+  await game.default({ module_or_path: "game/luckymonkey_bg.wasm" });
+} catch (e) {
+  // winit ends its event loop by throwing; that one is expected.
+  if (!String(e).includes("control flow")) console.error(e);
+}
+</script>
+</body>
+</html>

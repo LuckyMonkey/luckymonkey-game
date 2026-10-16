@@ -1,0 +1,585 @@
+{
+ "_about": "Node definitions (names, emoji, API connections). Placement is in islands.json. tools/gen-world.py builds world.json from both.",
+ "nodes": [
+  {
+   "id": "monkey-statue",
+   "name": "Lucky Monkey Guardian",
+   "type": "monkey",
+   "ipAddress": "192.168.1.1",
+   "emoji": "🐵",
+   "description": "The Guardian Construct. A memetic security avatar that protects the network. Approach with caution.",
+   "connections": [
+    "logical-lagoon",
+    "banana-sector",
+    "node-temple-1",
+    "volcano-core"
+   ],
+   "status": "online",
+   "securityLevel": 5,
+   "assets": [
+    "guardian_protocol.bin",
+    "security_matrix.dat",
+    "memetic_defense_v3.sys",
+    "avatar_config.json"
+   ],
+   "lore": "Carved by the first sysadmins from a single block of jade, the Guardian sits at the top of the pyramid and watches every packet with half-closed eyes. Monkeys leave a banana at its feet before every deploy. Nobody admits to believing it helps."
+  },
+  {
+   "id": "logical-lagoon",
+   "name": "Logical Lagoon API",
+   "type": "river",
+   "ipAddress": "192.168.1.42",
+   "emoji": "🌊",
+   "description": "A sacred API pool where memory fragments drift like lotus petals. Home to bytefish and static frogs.",
+   "connections": [
+    "monkey-statue",
+    "digital-river"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "api_endpoints.json",
+    "memory_fragments.dat",
+    "lotus_protocol.bin",
+    "static_frog.gif"
+   ],
+   "lore": "The river slows here into a warm pool where APIs float on lotus pads. The frogs say the water remembers every request ever made of it. They also hand out addresses to anything new that splashes in."
+  },
+  {
+   "id": "digital-river",
+   "name": "Digital River Stream",
+   "type": "river",
+   "ipAddress": "192.168.1.101",
+   "emoji": "🌊",
+   "description": "Channels raw signal through the jungle. Its rapids form when external pings overload the stream.",
+   "connections": [
+    "logical-lagoon",
+    "crashed-sector"
+   ],
+   "status": "online",
+   "securityLevel": 2,
+   "assets": [
+    "stream_flow.dat",
+    "signal_patterns.bin",
+    "ping_monitor.log",
+    "rapids_config.json"
+   ],
+   "lore": "A fast, shallow channel that carries raw signal from the lagoon to the shore. On calm days you can see the frames glinting under the surface like minnows."
+  },
+  {
+   "id": "banana-sector",
+   "name": "Banana Sector Cache",
+   "type": "banana-cache",
+   "ipAddress": "192.168.1.99",
+   "emoji": "🍌",
+   "description": "A playful but volatile subgrid where corrupted metadata manifests in humorous, unstable objects.",
+   "connections": [
+    "monkey-statue",
+    "node-temple-2"
+   ],
+   "status": "unstable",
+   "securityLevel": 1,
+   "assets": [
+    "corrupted_metadata.bin",
+    "unstable_objects.dat",
+    "humor_algorithm.js",
+    "banana_manifest.json"
+   ],
+   "lore": "Every banana the jungle has ever needed twice is kept here, ripe and ready, so nobody has to climb to the archive again. When it forgets one, the whole jungle notices the walk."
+  },
+  {
+   "id": "node-temple-1",
+   "name": "Node Temple Alpha",
+   "type": "temple",
+   "ipAddress": "10.0.0.1",
+   "emoji": "🏯",
+   "description": "Ancient structure that predates the current grid. Maintained by Ghostpackets, semi-aware maintenance protocols.",
+   "connections": [
+    "monkey-statue",
+    "crashed-sector"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "ancient_code.bin",
+    "ghostpacket_protocol.dat",
+    "maintenance_routines.sys",
+    "temple_history.txt"
+   ],
+   "lore": "The older of the two temples, built before anyone wrote things down. Ghostpackets still sweep its halls at night, delivering messages addressed to people who left long ago."
+  },
+  {
+   "id": "node-temple-2",
+   "name": "Node Temple Beta",
+   "type": "temple",
+   "ipAddress": "10.0.0.2",
+   "emoji": "🏯",
+   "description": "Ancient structure with mysterious origins. Contains a Hash of Belief required to access deeper sectors.",
+   "connections": [
+    "banana-sector",
+    "server-hub"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "hash_of_belief.key",
+    "mysterious_origins.log",
+    "deeper_sector_map.dat",
+    "ancient_symbols.svg"
+   ],
+   "lore": "Its door opens only for a hash nobody remembers choosing. The priests keep a backup of the hash on a stone tablet in the vault, which is locked with the same hash."
+  },
+  {
+   "id": "crashed-sector",
+   "name": "Crashed Sector 404",
+   "type": "server",
+   "ipAddress": "192.168.1.404",
+   "emoji": "💻",
+   "description": "A barren dead zone filled with 404 skeletons and server husks. Haunted by Ghostpackets.",
+   "connections": [
+    "node-temple-1",
+    "digital-river"
+   ],
+   "status": "offline",
+   "securityLevel": 0,
+   "assets": [
+    "404_error_log.txt",
+    "server_husks.dat",
+    "ghostpacket_traces.bin",
+    "crash_report.json"
+   ],
+   "lore": "Something fell out of the sky here once and never booted again. The monkeys keep it around as a reminder to take backups."
+  },
+  {
+   "id": "server-hub",
+   "name": "Server Hub Cluster",
+   "type": "server",
+   "ipAddress": "192.168.1.200",
+   "emoji": "💻",
+   "description": "A cluster of ancient servers processing unknown data. The terminals occasionally display cryptic messages.",
+   "connections": [
+    "node-temple-2"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "unknown_data.bin",
+    "cryptic_messages.log",
+    "terminal_output.txt",
+    "processing_algorithms.js"
+   ],
+   "lore": "Rows of humming racks under the canopy, warm enough that the parrots nest on top of them in the rainy season. Most of the jungle's work actually happens here."
+  },
+  {
+   "id": "main-router",
+   "name": "メインルーター Router",
+   "type": "router",
+   "ipAddress": "192.168.0.1",
+   "emoji": "📡",
+   "description": "Central routing node that manages all network traffic. Elevated position provides optimal signal distribution.",
+   "connections": [
+    "monkey-statue",
+    "firewall-north",
+    "firewall-south"
+   ],
+   "status": "online",
+   "securityLevel": 5,
+   "assets": [
+    "routing_table.dat",
+    "network_traffic.log",
+    "signal_distribution.bin",
+    "router_config.json"
+   ],
+   "lore": "Perched on the highest ledge of Temple Isle, the router knows a path to every island. If it goes quiet, the islands can still see each other across the void but have no way to talk."
+  },
+  {
+   "id": "firewall-north",
+   "name": "北ファイアウォール Firewall",
+   "type": "firewall",
+   "ipAddress": "192.168.0.10",
+   "emoji": "🔥",
+   "description": "Northern security barrier that filters incoming traffic. Runs on ancient code that nobody fully understands.",
+   "connections": [
+    "main-router",
+    "database-cluster"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "filter_rules.dat",
+    "ancient_code.bin",
+    "traffic_logs.txt",
+    "security_protocols.json"
+   ],
+   "lore": "A wall of thorny vines that lets the right traffic through and stings everything else. It runs rules written so long ago that nobody dares delete one."
+  },
+  {
+   "id": "firewall-south",
+   "name": "南ファイアウォール Firewall",
+   "type": "firewall",
+   "ipAddress": "192.168.0.11",
+   "emoji": "🔥",
+   "description": "Southern security barrier with additional encryption layers. Frequently targeted by digital predators.",
+   "connections": [
+    "main-router"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "encryption_keys.dat",
+    "predator_logs.txt",
+    "defense_patterns.bin",
+    "security_breach_history.json"
+   ],
+   "lore": "The southern wall is younger and stricter. It checks every packet twice, which the southern islanders call security and everyone else calls slow."
+  },
+  {
+   "id": "database-cluster",
+   "name": "データベース Database",
+   "type": "database",
+   "ipAddress": "192.168.0.50",
+   "emoji": "🗄️",
+   "description": "Massive storage facility containing all historical records. Access requires multiple authentication factors.",
+   "connections": [
+    "firewall-north"
+   ],
+   "status": "online",
+   "securityLevel": 5,
+   "assets": [
+    "historical_records.db",
+    "authentication_factors.dat",
+    "storage_index.bin",
+    "access_logs.txt"
+   ],
+   "lore": "Three stone towers that hold the same records, so losing one never loses a record. Keeping the three in agreement is a full-time job for a very patient sloth."
+  },
+  {
+   "id": "volcano-core",
+   "name": "Volcano Core Processor",
+   "type": "volcano",
+   "ipAddress": "192.168.1.666",
+   "emoji": "🌋",
+   "description": "A dangerous but powerful processing center built inside an active digital volcano. Processes data at extreme speeds but occasionally erupts, causing system-wide instabilities.",
+   "connections": [
+    "monkey-statue"
+   ],
+   "status": "erupting",
+   "securityLevel": 4,
+   "assets": [
+    "magma_cooling.sys",
+    "eruption_schedule.dat",
+    "heat_resistant_protocols.bin",
+    "lava_flow_control.json"
+   ],
+   "lore": "The fastest processor in the jungle runs inside a live volcano, cooled by the river and good intentions. It throttles itself whenever the leaves pile up on the vents."
+  },
+  {
+   "id": "ai-core-01",
+   "name": "Neural Processor Alpha",
+   "type": "ai-core",
+   "ipAddress": "10.0.1.42",
+   "emoji": "🧠",
+   "description": "Advanced neural network processor that handles complex pattern recognition and decision-making tasks.",
+   "connections": [
+    "monkey-statue",
+    "vault-01"
+   ],
+   "status": "online",
+   "securityLevel": 5,
+   "assets": [
+    "neural_index.bin",
+    "thought_patterns.dat",
+    "simulation_core.sys"
+   ],
+   "lore": "A thinking stone that sorts the jungle's problems by how weird they are. It once predicted a disk would fill on a Tuesday. It was a Wednesday, but everyone was impressed."
+  },
+  {
+   "id": "vault-01",
+   "name": "Backup Vault Node",
+   "type": "vault",
+   "ipAddress": "10.0.0.3",
+   "emoji": "🧱",
+   "description": "Secure storage facility for critical system backups and recovery data. Protected by multiple encryption layers.",
+   "connections": [
+    "ai-core-01",
+    "firewall-01"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "system_snapshot.bin",
+    "recovery_logic.dat",
+    "archive_index.sys"
+   ],
+   "lore": "The backups live here, behind three doors and one very suspicious toucan. A backup nobody has ever restored is just a hope, so the toucan restores one every Friday."
+  },
+  {
+   "id": "switch-01",
+   "name": "Junction Switch",
+   "type": "switch",
+   "ipAddress": "10.0.0.2",
+   "emoji": "🔀",
+   "description": "Network traffic control point that routes data packets between different sectors of the system.",
+   "connections": [
+    "firewall-01",
+    "banana-cache-01"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "routing_table.bin",
+    "connection_map.dat",
+    "signal_logs.sys"
+   ],
+   "lore": "Every cable on the shore meets at this junction, where a switch decides which port each frame goes out of. Plug two of its ports into each other and the frames chase themselves forever."
+  },
+  {
+   "id": "banana-cache-01",
+   "name": "Humor Cache Alpha",
+   "type": "banana-cache",
+   "ipAddress": "10.0.0.4",
+   "emoji": "🍌",
+   "description": "Storage node for entertainment subroutines and humor algorithms. Often glitches in unpredictable ways.",
+   "connections": [
+    "switch-01",
+    "terminal-01"
+   ],
+   "status": "unstable",
+   "securityLevel": 2,
+   "assets": [
+    "meme_collection.bin",
+    "joke_database.dat",
+    "banana_manifest.sys"
+   ],
+   "lore": "A small cache of jokes the monkeys tell during long outages. It is surprisingly critical infrastructure."
+  },
+  {
+   "id": "terminal-01",
+   "name": "Legacy Terminal",
+   "type": "terminal",
+   "ipAddress": "10.0.0.5",
+   "emoji": "💻",
+   "description": "Ancient access point to the system core. Uses outdated command syntax but has deep system privileges.",
+   "connections": [
+    "banana-cache-01"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "command_history.log",
+    "bootword_list.dat",
+    "access_codes.sys"
+   ],
+   "lore": "An old green-screen terminal at the end of the lake path. Its commands still work, mostly, as long as you type them in capital letters."
+  },
+  {
+   "id": "quantum-nexus",
+   "name": "Quantum Nexus Core",
+   "type": "server",
+   "ipAddress": "192.168.q.∞",
+   "emoji": "⚛️",
+   "description": "Experimental quantum computing node that exists in multiple states simultaneously. Calculations performed here may have different results each time they're observed.",
+   "connections": [
+    "node-temple-1"
+   ],
+   "status": "unstable",
+   "securityLevel": 5,
+   "assets": [
+    "quantum_states.dat",
+    "superposition_matrix.bin",
+    "observation_effects.log",
+    "uncertainty_calculations.js"
+   ],
+   "lore": "An experimental machine on Ember Isle that is both running and not running until someone checks. The on-call monkey would rather it just picked one."
+  },
+  {
+   "id": "data-archive",
+   "name": "Ancient Data Archive",
+   "type": "database",
+   "ipAddress": "10.0.1.42",
+   "emoji": "📚",
+   "description": "Repository of forgotten code and lost algorithms. The oldest data dates back to the pre-digital era, somehow preserved in binary form.",
+   "connections": [
+    "banana-sector"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "forgotten_code.bin",
+    "lost_algorithms.dat",
+    "pre_digital_artifacts.sys",
+    "binary_preservation.log"
+   ],
+   "lore": "The deepest storage in the jungle: every log, every snapshot, every version of every banana count. It fills up slowly and then all at once."
+  },
+  {
+   "id": "lizard-node",
+   "name": "Reptile Protocol",
+   "type": "lizard",
+   "ipAddress": "10.0.2.42",
+   "emoji": "🦎",
+   "description": "Cold-blooded system monitor that conserves energy while maintaining vigilance. Specializes in detecting anomalies in data patterns.",
+   "connections": [
+    "monkey-statue",
+    "digital-river"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "cold_blood.bin",
+    "scale_pattern.dat",
+    "sun_basking.sys"
+   ],
+   "lore": "A cold-blooded monitor that lies very still on a warm rock and notices everything. It reports nothing until it is sure, which is either wisdom or laziness."
+  },
+  {
+   "id": "data-lake",
+   "name": "Data Lake",
+   "type": "lake",
+   "ipAddress": "10.4.0.1",
+   "emoji": "🏞️",
+   "description": "Where the Digital River ends. Every frame that ever flowed downstream settles here, replicated three ways and rarely read.",
+   "connections": [
+    "digital-river",
+    "terminal-01",
+    "firewall-south"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "lake_manifest.json",
+    "replica_a.dat",
+    "replica_b.dat",
+    "replica_c.dat"
+   ],
+   "lore": "Where the river finally stops. Every frame that ever flowed downstream settles here, and the analysts fish for patterns from the shore."
+  },
+  {
+   "id": "dns-shrine",
+   "name": "DNS Shrine",
+   "type": "dns",
+   "ipAddress": "10.0.0.53",
+   "emoji": "⛩️",
+   "description": "Monks chant names into numbers. When the shrine forgets, nobody in the jungle can find anybody else.",
+   "connections": [
+    "monkey-statue",
+    "node-temple-1",
+    "lizard-node",
+    "main-router"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "zonefile.txt",
+    "resolver.sys",
+    "ttl_prayers.log"
+   ],
+   "lore": "Monks chant the names of every island and the numbers they stand for. Visitors ask for a name and leave with a number. When the monks forget, nobody can find anything."
+  },
+  {
+   "id": "lb-lilypads",
+   "name": "Lilypad Load Balancer",
+   "type": "balancer",
+   "ipAddress": "10.1.0.10",
+   "emoji": "🪷",
+   "description": "Frames hop from pad to pad across the river; the pads take turns so no single one sinks.",
+   "connections": [
+    "main-router",
+    "switch-01",
+    "banana-sector",
+    "cdn-canopy"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "pool_members.json",
+    "health_checks.log"
+   ],
+   "lore": "Frames cross the river by hopping pad to pad. The pads take turns carrying them, so no single pad sinks under the weight."
+  },
+  {
+   "id": "mq-falls",
+   "name": "Message Queue Falls",
+   "type": "queue",
+   "ipAddress": "10.2.0.5",
+   "emoji": "📨",
+   "description": "Messages wait in the pool at the top of the waterfall and drop one at a time, in order. Usually.",
+   "connections": [
+    "logical-lagoon",
+    "firewall-north",
+    "node-temple-2"
+   ],
+   "status": "online",
+   "securityLevel": 3,
+   "assets": [
+    "queue_depth.dat",
+    "dead_letters.log",
+    "consumers.json"
+   ],
+   "lore": "Messages queue in the pool at the top of the falls and drop one at a time, in order, so nothing downstream gets swamped."
+  },
+  {
+   "id": "watchtower",
+   "name": "Canopy Watchtower",
+   "type": "monitor",
+   "ipAddress": "10.9.0.1",
+   "emoji": "🔭",
+   "description": "Monitoring. Sees trouble coming: expiring certs, scheduled deploys, filling disks. If it goes dark, so do your forecasts.",
+   "connections": [
+    "main-router",
+    "banana-sector",
+    "database-cluster"
+   ],
+   "status": "online",
+   "securityLevel": 4,
+   "assets": [
+    "dashboards.json",
+    "alert_rules.yml",
+    "pager.log"
+   ],
+   "lore": "A lonely tower on a floating rock, its telescope pointed at every island at once. It sees trouble coming: expiring certificates, scheduled deploys, filling disks."
+  },
+  {
+   "id": "auth-gate",
+   "name": "Auth Gate",
+   "type": "auth",
+   "ipAddress": "10.3.0.1",
+   "emoji": "🛂",
+   "description": "Checks every monkey's papers. Holds the certificates the rest of the jungle trusts.",
+   "connections": [
+    "vault-01",
+    "ai-core-01",
+    "banana-cache-01",
+    "main-router"
+   ],
+   "status": "online",
+   "securityLevel": 5,
+   "assets": [
+    "ca_bundle.pem",
+    "sessions.dat",
+    "policy.json"
+   ],
+   "lore": "A carved gate where every visitor shows their papers. It also keeps the certificates the rest of the jungle trusts, which makes it a very popular target."
+  },
+  {
+   "id": "cdn-canopy",
+   "name": "CDN Canopy",
+   "type": "cdn",
+   "ipAddress": "10.5.0.1",
+   "emoji": "🌐",
+   "description": "Copies of popular bananas cached high in the treetops at the river delta, close to every visitor.",
+   "connections": [
+    "lb-lilypads",
+    "switch-01",
+    "terminal-01"
+   ],
+   "status": "online",
+   "securityLevel": 2,
+   "assets": [
+    "edge_cache.bin",
+    "purge_requests.log"
+   ],
+   "lore": "Copies of the most popular bananas, cached high in the treetops by the delta, so visitors never have to wait for the trip upstream."
+  }
+ ]
+}

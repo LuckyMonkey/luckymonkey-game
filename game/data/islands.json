@@ -1,0 +1,332 @@
+{
+ "_about": "The archipelago. One long river falls in from the void, runs through the islands strung along it, and spills off into the void again. `bridges` lists the few island pairs joined by a vine bridge; islands off the river with no bridge float free. Edit, then `tools/deploy.sh data` (regenerates world.json, seconds). Grid: +x runs down-right on screen, +y down-left. Node offsets are relative to the island centre; a node that lands on water is nudged to the nearest bank.",
+ "seed": 8675309,
+ "islands": [
+  {
+   "id": "lagoon",
+   "name": "Lagoon Heights",
+   "emoji": "🫧",
+   "center": [
+    4,
+    3
+   ],
+   "radius": 5,
+   "height": 9,
+   "biome": "jungle",
+   "nodes": {
+    "logical-lagoon": [
+     2,
+     2
+    ],
+    "mq-falls": [
+     -3,
+     -1
+    ],
+    "lizard-node": [
+     2,
+     -3
+    ]
+   },
+   "hills": 2
+  },
+  {
+   "id": "canopy",
+   "name": "Canopy Ridge",
+   "emoji": "🌳",
+   "center": [
+    8,
+    17
+   ],
+   "radius": 6,
+   "height": 7,
+   "biome": "jungle",
+   "nodes": {
+    "firewall-north": [
+     -1,
+     0
+    ],
+    "node-temple-2": [
+     -3,
+     3
+    ],
+    "server-hub": [
+     2,
+     2
+    ],
+    "vault-01": [
+     0,
+     5
+    ]
+   },
+   "hills": 2
+  },
+  {
+   "id": "temple",
+   "name": "Temple Isle",
+   "emoji": "🛕",
+   "center": [
+    25,
+    14
+   ],
+   "radius": 6,
+   "height": 5,
+   "biome": "temple",
+   "nodes": {
+    "monkey-statue": [
+     0,
+     0
+    ],
+    "main-router": [
+     4,
+     1
+    ],
+    "dns-shrine": [
+     1,
+     4
+    ],
+    "ai-core-01": [
+     4,
+     4
+    ]
+   },
+   "hills": 1
+  },
+  {
+   "id": "shore",
+   "name": "Digital Shore",
+   "emoji": "💾",
+   "center": [
+    27,
+    35
+   ],
+   "radius": 6,
+   "height": 3,
+   "biome": "jungle",
+   "nodes": {
+    "digital-river": [
+     1,
+     -2
+    ],
+    "node-temple-1": [
+     -2,
+     1
+    ],
+    "firewall-south": [
+     -1,
+     4
+    ]
+   },
+   "hills": 2
+  },
+  {
+   "id": "banana",
+   "name": "Banana Grove",
+   "emoji": "🍌",
+   "center": [
+    39,
+    26
+   ],
+   "radius": 7,
+   "height": 5,
+   "biome": "grove",
+   "nodes": {
+    "banana-sector": [
+     1,
+     0
+    ],
+    "banana-cache-01": [
+     3,
+     3
+    ],
+    "auth-gate": [
+     -1,
+     -3
+    ],
+    "data-archive": [
+     4,
+     -2
+    ]
+   },
+   "hills": 2
+  },
+  {
+   "id": "lake",
+   "name": "Data Lake",
+   "emoji": "🌊",
+   "center": [
+    46,
+    46
+   ],
+   "radius": 7,
+   "height": 1,
+   "biome": "jungle",
+   "nodes": {
+    "data-lake": [
+     -3,
+     0
+    ],
+    "terminal-01": [
+     -1,
+     4
+    ],
+    "switch-01": [
+     4,
+     -2
+    ],
+    "lb-lilypads": [
+     1,
+     2
+    ]
+   },
+   "hills": 1
+  },
+  {
+   "id": "ember",
+   "name": "Ember Isle",
+   "emoji": "🌋",
+   "center": [
+    6,
+    40
+   ],
+   "radius": 6,
+   "height": 6,
+   "biome": "volcano",
+   "nodes": {
+    "volcano-core": [
+     0,
+     0
+    ],
+    "crashed-sector": [
+     3,
+     2
+    ],
+    "quantum-nexus": [
+     -1,
+     4
+    ]
+   },
+   "hills": 2
+  },
+  {
+   "id": "watch",
+   "name": "Watch Isle",
+   "emoji": "🔭",
+   "center": [
+    60,
+    34
+   ],
+   "radius": 5,
+   "height": 8,
+   "biome": "jungle",
+   "nodes": {
+    "watchtower": [
+     0,
+     0
+    ],
+    "database-cluster": [
+     3,
+     2
+    ],
+    "cdn-canopy": [
+     -1,
+     3
+    ]
+   },
+   "hills": 2
+  }
+ ],
+ "bridges": [
+  [
+   "temple",
+   "banana"
+  ],
+  [
+   "canopy",
+   "shore"
+  ]
+ ],
+ "pools": [
+  {
+   "at": [
+    4,
+    4
+   ],
+   "radius": 2.0,
+   "lagoon": true
+  },
+  {
+   "at": [
+    46,
+    46
+   ],
+   "radius": 2.6,
+   "lotus": true
+  }
+ ],
+ "rivers": [
+  {
+   "name": "main",
+   "points": [
+    [
+     -9,
+     -7,
+     11
+    ],
+    [
+     1,
+     1,
+     9
+    ],
+    [
+     8,
+     10,
+     7
+    ],
+    [
+     16,
+     13,
+     5
+    ],
+    [
+     21,
+     22,
+     4
+    ],
+    [
+     30,
+     27,
+     3
+    ],
+    [
+     35,
+     37,
+     2
+    ],
+    [
+     43,
+     41,
+     1
+    ],
+    [
+     49,
+     51,
+     1
+    ],
+    [
+     56,
+     55,
+     0
+    ],
+    [
+     63,
+     63,
+     0
+    ]
+   ]
+  }
+ ],
+ "islets": 12,
+ "bridge_kind": 4,
+ "deco_density": 0.14,
+ "islet_max_height": 9
+}

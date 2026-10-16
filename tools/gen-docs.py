@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Write the data-driven wiki pages from the game's own JSON, so they never drift:
+
+  docs/failures.md   every fault in game/data/tuning.json: symptom, warning stage,
+                     what each response does and why, the concept it teaches
+  docs/nodes.md      every node in game/data/nodes.json: island, role, lore, links
+
+Run by tools/deploy.sh; run it by hand after editing the JSON.
+"""
+import json, os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GAME = "https://go.fridge.run/luckymonkey"
+T = json.load(open(os.path.join(ROOT, "game/data/tuning.json")))
+NODES = json.load(open(os.path.join(ROOT, "game/data/nodes.json")))["nodes"]
+ISLES = json.load(open(os.path.join(ROOT, "game/data/islands.json")))
+A, F, C = T["actions"], T["faults"], T["concepts"]
+BYID = {n["id"]: n for n in NODES}
+# Ember and Watch sit off the river with no bridge; links reach them as ropes.
+PLACE = {"ember": "free-floating", "watch": "free-floating"}
+for a, b in ISLES.get("bridges", []):
+    for x, y in ((a, b), (b, a)):
+        PLACE.setdefault(x, f"on the river, vine bridge to {next(i['name'] for i in ISLES['islands'] if i['id'] == y)}")
+
+
+def act(k):
+    return f"{A[k]['emoji']} {A[k]['label']}" if k in A else k
+
+
+def anchor(h):
+    import re
+    return re.sub(r"[^a-z0-9_]+", "_", h.lower()).strip("_")
+
+
+def live_node(f):
+    kinds = f.get("kinds") or []
+    for n in NODES:
+        if not kinds or n["type"] in kinds:
+            return n
+    return NODES[0]
+
+
+def failures():
+    out = [
+        "---", "title: Lucky Monkey - failure types", "---", "",
+        "# Failure types", "",
+        "> Eighteen ways a jungle network breaks, each a real production failure in",
+        "> costume, each with a real first move.", "",
+        "**Generated from [`game/data/tuning.json`](build-deploy.md#live_data) by "
+        "`tools/gen-docs.py`**, so every number and sentence here is exactly what the game uses. "
+        "Edit the JSON, run `tools/deploy.sh data`, and the game changes in seconds; the next "
+        "full deploy regenerates this page.", "",
+        "How to read a fault:",
+        "- **Symptom** is what the panel says. It always contains the clue.",
+        "- A **warning stage** (📅 🧬 🔐 💾 …) means you can see it coming and *prevent* it: nothing is broken yet.",
+        "- **Fix** removes the root cause. **Mitigate** buys the stated seconds, then the fault comes back. "
+        "**No effect** costs you the time and your combo, and the game explains why it didn't help.",
+        "- 🔍 **Diagnose** shows what every option would do before you commit, and teaches the concept.",
+        "- **Time to Loss** is the game's own countdown to the next consequence "
+        "([not IP TTL or DNS TTL](glossary.md)). Levels scale it (training ×1.3, shift 3+ ×0.85, practice ×3).", "",
+        "Every section has a ▶ **live** link that starts a shift with that fault staged on a real node.", "",
+        "## At a glance", "",
+        "| Fault | Group | Time to Loss | Fix | Mitigate | Can be prevented? | Spreads? |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for k, f in F.items():
+        r = f.get("responses", {})
+        fx = ", ".join(act(a) for a, v in r.items() if v["effect"] == "fix") or "—"
+        mi = ", ".join(f"{act(a)} ({v.get('secs')} s)" for a, v in r.items() if v["effect"] == "mitigate") or "—"
+        w = f.get("warning")
+        prev = f"yes: {w['emoji']} → " + ", ".join(act(p) for p in w.get("prevent", [])) if w else "no"
+        if k == "power":
+            prev = "no (lightning)"
+        out.append(f"| {f['emoji']} [{f['name']}](#{anchor(f['name'])}) | {f['group']} | {f['ttl']} s | {fx} | {mi} | {prev} | {'yes, once' if f.get('spreads') else 'no'} |")
+    out.append("")
+    for k, f in F.items():
+        n = live_node(f)
+        out += [f"## {f['name']}", ""]
+        link = f"{GAME}#node={n['id']}&incident={k}&zoom=1.2"
+        out.append(f"{f['emoji']} `{k}` · {f['group']} · **{f['ttl']} s** to loss · hits: "
+                   + (", ".join(f"`{x}`" for x in f.get("kinds", [])) or "any node")
+                   + f" · ▶ [live on {n['name']}]({link})")
+        out += ["", f"**Symptom:** {f['symptom']}", ""]
+        w = f.get("warning")
+        if w:
+            wl = f"{GAME}#node={n['id']}&forecast={k}&zoom=1.2"
+            out += [f"**Warning stage** {w['emoji']} ({w.get('ttl', '?')} s): {w['text']} Prevent with "
+                    + ", ".join(act(p) for p in w.get("prevent", [])) + f". ▶ [live]({wl})", ""]
+        out += ["| Response | Effect | Why |", "|---|---|---|"]
+        for a, v in f.get("responses", {}).items():
+            eff = {"fix": "✅ fix", "mitigate": f"🩹 mitigate, {v.get('secs')} s", "none": "✖ no effect"}[v["effect"]]
+            out.append(f"| {act(a)} ({A.get(a, {}).get('secs', '?')} s of work) | {eff} | {v.get('note', '')} |")
+        for d in f.get("decoys", []):
+            out.append(f"| {act(d)} | ✖ no effect | A real tool for a different problem. |")
+        out.append("")
+        if f.get("spreads"):
+            out += [f"**Spreads:** {T['director']['spread_after']} s after its node goes down, it jumps once to a healthy neighbour.", ""]
+        c = C.get(f.get("concept", ""))
+        if c:
+            out += [f"**Concept, {c['name']}:** {c['text']}", ""]
+    out += ["## Traps", "",
+            f"- {act('disabletls')}: the game refuses it and explains why turning off encryption is never a fix.", "",
+            "## Lightning", "",
+            "Storm clouds flash and strike a node within range: a **Power supply failed** fault "
+            "(above). It goes through the same director budget as every other fault, so a storm "
+            "never piles on top of a bad moment.", "",
+            "Next: [Nodes and lore](nodes.md) · Back to the [documentation](index.md)", ""]
+    return "\n".join(out)
+
+
+def nodes():
+    out = [
+        "---", "title: Lucky Monkey - nodes and lore", "---", "",
+        "# Nodes and lore", "",
+        "> Twenty-eight places in the jungle, each a real kind of infrastructure, each with a story.", "",
+        "**Generated from [`game/data/nodes.json`](world.md) and "
+        "[`islands.json`](world.md#the_archipelago) by `tools/gen-docs.py`.** In the game, "
+        "press **T** (outside a shift) for the same tour, island by island, with what each node "
+        "links to and how many services would lose their path if it went down.", "",
+    ]
+    for isle in ISLES["islands"]:
+        ids = list(isle.get("nodes", {}))
+        if not ids:
+            continue
+        out += [f"## {isle['emoji']} {isle['name']}", "",
+                f"Height {isle.get('height', 0)} · {isle.get('biome', '')} · "
+                + PLACE.get(isle["id"], "on the river"), ""]
+        for nid in ids:
+            n = BYID.get(nid)
+            if not n:
+                continue
+            role = T["roles"].get(n["type"], "")
+            crit = T["criticality"].get(n["type"])
+            links = ", ".join(BYID[c]["name"] for c in n.get("connections", []) if c in BYID)
+            out += [f"### {n['emoji']} {n['name']}", "",
+                    f"`{n['id']}` · {n['type']} · {n.get('ipAddress', '')}"
+                    + (f" · criticality {crit}" if crit else "")
+                    + f" · ▶ [see it]({GAME}#node={n['id']}&zoom=1.4)", ""]
+            if role:
+                out += [f"**Role:** {role}", ""]
+            if n.get("lore"):
+                out += [f"*{n['lore']}*", ""]
+            if links:
+                out += [f"**Links to:** {links}", ""]
+    out += ["Next: [Failure types](failures.md) · Back to the [documentation](index.md)", ""]
+    return "\n".join(out)
+
+
+for name, text in (("failures.md", failures()), ("nodes.md", nodes())):
+    with open(os.path.join(ROOT, "docs", name), "w") as fh:
+        fh.write(text)
+print("docs: failures.md, nodes.md")

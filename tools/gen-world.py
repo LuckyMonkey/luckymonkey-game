@@ -1,0 +1,240 @@
+#!/usr/bin/env python3
+"""Build game/data/world.json from islands.json (layout) + nodes.json (node definitions).
+
+Run by `tools/deploy.sh data`. Islands are separate blobs of terrain floating in
+the void; every API link between two islands gets a 1-tile vine bridge, and
+rivers are drawn as 3-wide water channels with grass banks, so where they cross
+the void they become aqueducts joining the islands.
+"""
+import json, math, os, random, sys
+
+ROOT = os.path.join(os.path.dirname(__file__), "..", "game", "data")
+GRASS, WATER, PLATFORM, SCORCHED, VOLCANO, TEMPLE = 0, 1, 4, 5, 6, 7
+
+
+def load(name):
+    with open(os.path.join(ROOT, name), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def main():
+    lay, nodes_src, npcs = load("islands.json"), load("nodes.json")["nodes"], load("npcs.json")
+    rng = random.Random(lay.get("seed", 1))
+    tiles, decos = {}, []  # (x,y) -> dict
+
+    def put(x, y, kind, h, **flags):
+        tiles[(x, y)] = dict(x=x, y=y, type=kind, height=h, **flags)
+
+    # Islands: a noisy disc, a little higher in the middle, biome features at the centre.
+    owner = {}
+    for isl in lay["islands"]:
+        cx, cy = isl["center"]
+        r, base, biome = isl["radius"], isl["height"], isl.get("biome", "jungle")
+        bumps = [rng.uniform(-0.18, 0.22) for _ in range(8)]
+        for dx in range(-r - 2, r + 3):
+            for dy in range(-r - 2, r + 3):
+                d = math.hypot(dx, dy)
+                a = (math.atan2(dy, dx) / (2 * math.pi) * 8) % 8
+                i0 = int(a)
+                edge = r * (1 + bumps[i0] + (bumps[(i0 + 1) % 8] - bumps[i0]) * (a - i0))
+                if d > edge:
+                    continue
+                h, kind = base + (1 if d < edge * 0.45 else 0), GRASS
+                if biome == "temple":
+                    step = max(dx and abs(dx), abs(dy))
+                    if step <= 3:
+                        h, kind = base + 4 - step, TEMPLE
+                elif biome == "volcano":
+                    if d < 1.5:
+                        h, kind = base + 4, VOLCANO
+                    elif d < 3.2:
+                        h, kind = base + int(4.5 - d), SCORCHED if d > 2.4 else VOLCANO
+                    elif rng.random() < 0.35:
+                        kind = SCORCHED
+                elif biome == "grove" and rng.random() < 0.08:
+                    kind = PLATFORM
+                put(cx + dx, cy + dy, kind, h)
+                owner[(cx + dx, cy + dy)] = isl["id"]
+
+    # Hills: a few stepped mounds per island for verticality (not on temple or lava).
+    for isl in lay["islands"]:
+        cx, cy = isl["center"]
+        r = isl["radius"]
+        for _ in range(isl.get("hills", 0)):
+            a = rng.uniform(0, 2 * math.pi)
+            dd = rng.uniform(0.25, 0.6) * r
+            hx, hy = cx + math.cos(a) * dd, cy + math.sin(a) * dd
+            peak = rng.randint(2, 3)
+            spread = rng.uniform(1.6, 2.6)
+            for (x, y), t in tiles.items():
+                if owner.get((x, y)) != isl["id"] or t["type"] not in (GRASS, PLATFORM, SCORCHED):
+                    continue
+                lift = peak - int(math.hypot(x - hx, y - hy) / spread * peak)
+                if lift > 0:
+                    t["height"] += lift
+
+    # Node placement: island centre + offset, standing on the ground there.
+    where, island_of = {}, {}
+    for isl in lay["islands"]:
+        for nid, (ox, oy) in isl["nodes"].items():
+            where[nid] = (isl["center"][0] + ox, isl["center"][1] + oy)
+            island_of[nid] = isl["id"]
+    by_id = {n["id"]: n for n in nodes_src}
+    missing = [n for n in by_id if n not in where]
+    if missing:
+        sys.exit(f"nodes without an island in islands.json: {missing}")
+
+    def line(a, b):
+        """4-connected cells from a to b (so every step shares an edge)."""
+        (x0, y0), (x1, y1) = a, b
+        cells, x, y = [(x0, y0)], x0, y0
+        while (x, y) != (x1, y1):
+            ex, ey = x1 - x, y1 - y
+            if abs(ex) * (abs(y1 - y0) + 1) >= abs(ey) * (abs(x1 - x0) + 1):
+                x += (ex > 0) - (ex < 0)
+            else:
+                y += (ey > 0) - (ey < 0)
+            cells.append((x, y))
+        return cells
+
+    def ground(c):
+        return tiles[c]["height"] if c in tiles else None
+
+    # Vine bridges: only the island pairs listed in `bridges`.
+    centre_of = {i["id"]: tuple(i["center"]) for i in lay["islands"]}
+    bridged = set()
+    for a, b in lay.get("bridges", []):
+        bridged.add((a, b))
+        cells = line(centre_of[a], centre_of[b])
+        ha, hb = ground(centre_of[a]) or 0, ground(centre_of[b]) or 0
+        for k, c in enumerate(cells):
+            if c in tiles:
+                continue
+            t = k / max(1, len(cells) - 1)
+            put(*c, lay.get("bridge_kind", PLATFORM), round(ha + (hb - ha) * t), bridge=True)
+            if rng.random() < 0.18:
+                decos.append(dict(type=rng.choice(["bamboo", "bush", "flower"]), position=dict(x=c[0], y=c[1], height=0)))
+
+    # Rivers: waypoints [x, y, height]; water 3 wide with a bank on each side.
+    streams = []
+    for river in lay["rivers"]:
+        pts, centre = river["points"], []
+        for (x0, y0, h0), (x1, y1, h1) in zip(pts, pts[1:]):
+            seg = line((x0, y0), (x1, y1))
+            for k, c in enumerate(seg[:-1] if centre else seg):
+                t = k / max(1, len(seg) - 1)
+                centre.append((c[0], c[1], math.floor(h0 + (h1 - h0) * t + 1e-6)))
+        if centre[-1][:2] != tuple(pts[-1][:2]):
+            centre.append(tuple(pts[-1]))
+        prev_h = None
+        for i, (x, y, h) in enumerate(centre):
+            nxt = centre[i + 1][2] if i + 1 < len(centre) else h
+            fall = i < 2 or i >= len(centre) - 2 or nxt < h
+            for dx, dy in ((0, 0), (1, 0), (0, 1)):
+                    c = (x + dx, y + dy)
+                    old = tiles.get(c)
+                    if old and old["type"] == WATER and old["height"] <= h:
+                        continue
+                    put(*c, WATER, h, **({"fall": True} if fall else {}))
+            prev_h = h
+        for x, y, h in centre:
+            for dx in range(-1, 3):
+                for dy in range(-1, 3):
+                    c = (x + dx, y + dy)
+                    if c not in tiles:
+                        put(*c, GRASS, h, bank=True)
+                        if rng.random() < 0.2:
+                            decos.append(dict(type=rng.choice(["tree", "bush", "bamboo", "rock"]), position=dict(x=c[0], y=c[1], height=h)))
+        streams.append([dict(x=x, y=y, height=h) for x, y, h in centre])
+
+    # Pools: lagoons and lakes (keep the water level of whatever is there).
+    for p in lay.get("pools", []):
+        (px, py), r = p["at"], p["radius"]
+        h = ground((px, py)) or 0
+        for dx in range(-int(r) - 1, int(r) + 2):
+            for dy in range(-int(r) - 1, int(r) + 2):
+                c = (px + dx, py + dy)
+                if math.hypot(dx, dy) <= r:
+                    put(*c, WATER, h, **({"lagoon": True} if p.get("lagoon") else {}))
+                    if p.get("lotus") and rng.random() < 0.3:
+                        decos.append(dict(type="lotus", position=dict(x=c[0], y=c[1], height=h)))
+                elif math.hypot(dx, dy) <= r + 1.2 and c not in tiles:
+                    put(*c, GRASS, h)
+
+    # Nodes that landed in the river or the void step onto the nearest bank (water nodes may stay).
+    for nid, (x, y) in list(where.items()):
+        t = tiles.get((x, y))
+        if t and (t["type"] != WATER or by_id[nid].get("type") in ("river", "lake", "balancer")):
+            continue
+        land = [c for c, t in tiles.items() if t["type"] != WATER and owner.get(c) == island_of[nid] and c not in where.values()]
+        if land:
+            where[nid] = min(land, key=lambda c: (c[0] - x) ** 2 + (c[1] - y) ** 2)
+
+    # Islets: small floating rocks scattered in the gaps, for scale and depth.
+    xs = [c[0] for c in tiles]; ys = [c[1] for c in tiles]
+    placed = 0
+    for _ in range(4000):
+        if placed >= lay.get("islets", 0):
+            break
+        cx, cy = rng.randint(min(xs) - 4, max(xs) + 4), rng.randint(min(ys) - 4, max(ys) + 4)
+        r = rng.choice([1, 1, 2])
+        if any((cx + dx, cy + dy) in tiles for dx in range(-r - 3, r + 4) for dy in range(-r - 3, r + 4)):
+            continue
+        h = rng.randint(0, lay.get("islet_max_height", 4))
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if abs(dx) + abs(dy) <= r:
+                    put(cx + dx, cy + dy, GRASS if rng.random() < 0.8 else SCORCHED, h)
+        decos.append(dict(type=rng.choice(["tree", "tree", "bush", "crystal", "mushroom"]), position=dict(x=cx, y=cy, height=h)))
+        placed += 1
+
+    # Decorations on island ground (never on node cells or bridges).
+    taken = set(where.values())
+    for c, t in tiles.items():
+        if c in taken or c not in owner or t["type"] in (WATER, TEMPLE) or any(abs(c[0] - w[0]) + abs(c[1] - w[1]) <= 1 for w in taken):
+            continue
+        if rng.random() < lay.get("deco_density", 0.12):
+            biome = next(i.get("biome") for i in lay["islands"] if i["id"] == owner[c])
+            pool = {"volcano": ["rock", "crystal", "mushroom"], "grove": ["tree", "tree", "bush", "flower"],
+                    "temple": ["flower", "bush", "bamboo"]}.get(biome, ["tree", "bush", "flower", "bamboo", "mushroom"])
+            decos.append(dict(type=rng.choice(pool), position=dict(x=c[0], y=c[1], height=t["height"])))
+
+    out_nodes = []
+    for n in nodes_src:
+        x, y = where[n["id"]]
+        out = dict(n)
+        out["position"] = dict(x=x, y=y, height=ground((x, y)) or 0)
+        out["island"] = island_of[n["id"]]
+        out_nodes.append(out)
+
+    islands = [dict(id=i["id"], name=i["name"], emoji=i.get("emoji", "🏝️"),
+                    center=dict(x=i["center"][0], y=i["center"][1], height=ground(tuple(i["center"])) or i["height"]),
+                    nodes=list(i["nodes"])) for i in lay["islands"]]
+
+    # Faint far-off islands beyond the map edge.
+    backdrop = []
+    for k in range(12):
+        a = k / 12 * 2 * math.pi + rng.uniform(-0.2, 0.2)
+        cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+        R = max(max(xs) - min(xs), max(ys) - min(ys)) * 0.75 + rng.uniform(0, 8)
+        backdrop.append([round(cx + math.cos(a) * R), round(cy + math.sin(a) * R), rng.choice([3, 4, 5])])
+
+    # Critters must start on land (or water, for swimmers).
+    land = [c for c, t in tiles.items() if t["type"] != WATER]
+    wet = [c for c, t in tiles.items() if t["type"] == WATER]
+    for n in npcs:
+        swims = n.get("type") in ("lizard", "crocodile")
+        ok = (round(n["x"]), round(n["y"])) in (wet if swims else tiles)
+        if not ok:
+            n["x"], n["y"] = rng.choice(wet if swims else land)
+
+    world = dict(seed=lay.get("seed"), baked=True, tiles=sorted(tiles.values(), key=lambda t: (t["x"], t["y"])),
+                 nodes=out_nodes, decorations=decos, streams=streams, islands=islands, backdrop=backdrop)
+    with open(os.path.join(ROOT, "world.json"), "w", encoding="utf-8") as f:
+        json.dump(world, f, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(ROOT, "npcs.json"), "w", encoding="utf-8") as f:
+        json.dump(npcs, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"world.json: {len(tiles)} tiles, {len(islands)} islands, {len(bridged)} bridges, {len(streams)} rivers, {placed} islets")
+
+
+main()

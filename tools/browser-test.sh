@@ -1,0 +1,36 @@
+#!/bin/bash
+# Smoke-test the game in a real (headless) Firefox and save screenshots.
+#
+#   tools/browser-test.sh [URL] [OUTDIR]
+#     URL     default https://go.fridge.run/luckymonkey
+#             (local: serve a dir with index.html + game/ via `python3 -m http.server 8791`)
+#     OUTDIR  default ./browser-test
+#
+# Needs: firefox, xvfb-run, xdotool, ImageMagick (import). Runs inside a virtual X
+# display, so it is silent and does not touch the desktop. WebGL is software
+# rendered (llvmpipe), so it is slow: allow ~45 s for the first frame.
+# Walks through: welcome -> Enter -> start shift -> Space (most urgent alert) ->
+# fix 1 -> watch -> zoom out. Check the PNGs and grep ff.log for "panic".
+set -eu
+URL=${1:-https://go.fridge.run/luckymonkey}
+OUT=${2:-./browser-test}
+mkdir -p "$OUT"
+OUT=$(cd "$OUT" && pwd)
+if [ -z "${DISPLAY_READY:-}" ]; then
+  DISPLAY_READY=1 exec xvfb-run -a -s "-screen 0 1280x800x24" "$0" "$URL" "$OUT"
+fi
+P=$HOME/snap/firefox/common/lm-browser-test
+mkdir -p "$P"
+echo 'user_pref("devtools.console.stdout.content", true); user_pref("webgl.force-enabled", true); user_pref("browser.shell.checkDefaultBrowser", false);' > "$P/user.js"
+firefox --no-remote --profile "$P" --kiosk "$URL" > "$OUT/ff.log" 2>&1 &
+FF=$!
+shot() { import -window root "$OUT/$1.png"; }
+sleep 45; xdotool mousemove 640 400 click 1; sleep 0.5; xdotool key Return; sleep 4; shot 1-world
+xdotool key Return; sleep 8; xdotool key space; sleep 2; shot 2-incident
+xdotool key 1; sleep 1.5; shot 3-walking
+sleep 6; shot 4-working
+sleep 14; xdotool key space; sleep 2; shot 5-later
+xdotool key minus minus minus; sleep 2; shot 6-zoomed-out
+kill $FF
+if grep -qi -E 'panic|RuntimeError|unreachable' "$OUT/ff.log"; then echo "ERRORS in $OUT/ff.log"; exit 1; fi
+echo "ok: screenshots in $OUT"

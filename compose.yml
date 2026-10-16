@@ -1,0 +1,23 @@
+# Lucky Monkey - its own container on the shared fridge-next runtime.
+#   sudo fridge-next luckymonkey up | down | restart | build | logs
+services:
+  luckymonkey:
+    image: fridge-next:14
+    container_name: luckymonkey
+    working_dir: /opt/fridge-next/apps/luckymonkey
+    command: ["next", "start", "-p", "3000"]
+    user: node
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./:/opt/fridge-next/apps/luckymonkey:ro
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+    mem_limit: 256m
+    networks: [web]
+networks:
+  web:
+    name: fridge-homepage_default
+    external: true

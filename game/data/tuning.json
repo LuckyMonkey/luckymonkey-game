@@ -1,0 +1,1007 @@
+{
+ "_about": "Lucky Monkey rules. Edit, then `tools/deploy.sh data` (seconds, no rebuild). Missing keys fall back to the built-in copy. See docs/ for what each part means.",
+ "shift_secs": 480,
+ "sla_target": 95,
+ "outage_floor": 25,
+ "outage_secs": 45,
+ "hike_speed": 90,
+ "points_fix": 100,
+ "points_prevent": 150,
+ "points_per_ttl_sec": 2,
+ "bananas_start": 2,
+ "banana_fix": 1,
+ "banana_prevent": 1,
+ "swing_cost": 1,
+ "swing_speed": 900,
+ "rally_cost": 2,
+ "diagnose_secs": 3,
+ "queue_max": 3,
+ "lightning_range": 110,
+ "lightning_chance": 0.35,
+ "director": {
+  "grace": 15,
+  "health_floor": 0.6,
+  "spread_after": 30,
+  "notice_every": 22,
+  "levels": [
+   {
+    "name": "Practice: no pressure",
+    "practice": true,
+    "first": 8,
+    "interval": [
+     30,
+     30
+    ],
+    "max_roots": [
+     1,
+     1
+    ],
+    "warning_share": 0.5,
+    "ttl_mult": 3.0,
+    "crew": [
+     "Mango",
+     "Pip",
+     "Moss",
+     "Fern"
+    ]
+   },
+   {
+    "name": "Shift 1: training",
+    "tutorial": true,
+    "first": 10,
+    "interval": [
+     40,
+     28
+    ],
+    "max_roots": [
+     1,
+     2
+    ],
+    "warning_share": 0.5,
+    "ttl_mult": 1.3,
+    "crew": [
+     "Mango",
+     "Pip"
+    ]
+   },
+   {
+    "name": "Shift 2",
+    "first": 15,
+    "interval": [
+     32,
+     20
+    ],
+    "max_roots": [
+     1,
+     3
+    ],
+    "warning_share": 0.45,
+    "ttl_mult": 1.1,
+    "crew": [
+     "Mango",
+     "Pip",
+     "Moss"
+    ]
+   },
+   {
+    "name": "Shift 3+",
+    "first": 10,
+    "interval": [
+     24,
+     13
+    ],
+    "max_roots": [
+     2,
+     4
+    ],
+    "warning_share": 0.4,
+    "ttl_mult": 0.85,
+    "crew": [
+     "Mango",
+     "Pip",
+     "Moss",
+     "Fern"
+    ]
+   }
+  ]
+ },
+ "workers": [
+  {
+   "name": "Mango",
+   "species": "monkey",
+   "emoji": "🐵",
+   "role": "Field technician: walks the links, fixes anything, swings on vines for 🍌.",
+   "home": "monkey-statue",
+   "speed": 300,
+   "work": 1.0,
+   "stamina": 5,
+   "rest": 14
+  },
+  {
+   "name": "Pip",
+   "species": "parrot",
+   "emoji": "🦜",
+   "role": "Scout: flies straight over the void and diagnoses fast; too small for heavy work.",
+   "home": "watchtower",
+   "speed": 420,
+   "flies": true,
+   "work": 1.4,
+   "diagnose_work": 0.5,
+   "can_heavy": false,
+   "stamina": 6,
+   "rest": 10
+  },
+  {
+   "name": "Moss",
+   "species": "sloth",
+   "emoji": "🦥",
+   "role": "Maintenance: slow to travel, twice as fast at preventive work (certificates, patches, clean-ups, canaries).",
+   "home": "banana-sector",
+   "speed": 110,
+   "work": 1.2,
+   "maintenance_work": 0.5,
+   "stamina": 4,
+   "rest": 16
+  },
+  {
+   "name": "Fern",
+   "species": "tree frog",
+   "emoji": "🐸",
+   "role": "Hardware specialist: hops fast between nodes and is twice as quick with cables, vents and power; too small for deploys and databases.",
+   "home": "switch-01",
+   "speed": 360,
+   "work": 1.3,
+   "hardware_work": 0.5,
+   "can_heavy": true,
+   "stamina": 5,
+   "rest": 12
+  }
+ ],
+ "tutorial": [
+  {
+   "fault": "crash",
+   "node": "terminal-01",
+   "coach": "A service crashed. Press Space (or click the 💻 terminal), then pick 🔄 Restart. A worker walks there and fixes it."
+  },
+  {
+   "fault": "dns",
+   "node": "dns-shrine",
+   "coach": "Names don't resolve but IPs work: that's DNS. Not sure? 🔍 Diagnose (I) shows which option fixes the cause."
+  },
+  {
+   "fault": "cert",
+   "node": "auth-gate",
+   "warning": true,
+   "coach": "A WARNING: nothing is broken yet. The big TIME TO LOSS timer counts down. Renew the certificate before it hits; Moss 🦥 is fastest at maintenance."
+  },
+  {
+   "fault": "dhcp",
+   "node": "logical-lagoon",
+   "coach": "Two at once! Pick a worker in the roster (Z/X/C) before choosing a fix, so each one takes a different job."
+  },
+  {
+   "fault": "disk",
+   "node": "data-archive",
+   "warning": true,
+   "with_previous": true,
+   "coach": "Two at once! Pick a worker in the roster (Z/X/C) before choosing a fix, so each one takes a different job."
+  }
+ ],
+ "faults": {
+  "crash": {
+   "emoji": "💥",
+   "name": "Service crashed",
+   "group": "systems",
+   "ttl": 60,
+   "weight": 1.2,
+   "concept": "process",
+   "symptom": "The service process exited. The machine still answers ping, but its port is closed.",
+   "responses": {
+    "restart": {
+     "effect": "fix",
+     "note": "The process is back; the logs show a one-off crash."
+    }
+   },
+   "decoys": [
+    "cleanup",
+    "rotatecert"
+   ]
+  },
+  "dns": {
+   "emoji": "📛",
+   "name": "DNS resolution failing",
+   "group": "network",
+   "ttl": 55,
+   "weight": 1.5,
+   "concept": "dns",
+   "kinds": [
+    "dns"
+   ],
+   "symptom": "Clients can't resolve hostnames. Connecting by IP address still works, but nobody remembers the numbers.",
+   "responses": {
+    "fixdns": {
+     "effect": "fix",
+     "note": "Resolver configuration restored; names resolve again."
+    },
+    "restart": {
+     "effect": "mitigate",
+     "note": "The restart reloaded the cache, but the bad config returns as records expire.",
+     "secs": 25
+    }
+   },
+   "decoys": [
+    "replacecable",
+    "expandpool"
+   ]
+  },
+  "dhcp": {
+   "emoji": "🏷️",
+   "name": "DHCP pool exhausted",
+   "group": "network",
+   "ttl": 60,
+   "concept": "dhcp",
+   "kinds": [
+    "river",
+    "lake",
+    "switch",
+    "lizard",
+    "terminal"
+   ],
+   "symptom": "No addresses left in the pool. New devices get no lease and fall back to 169.254.x.x, which can't reach anything.",
+   "responses": {
+    "expandpool": {
+     "effect": "fix",
+     "note": "The pool is widened from /26 to /24; new devices get leases."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Restarting doesn't create addresses: the pool is still full."
+    }
+   },
+   "decoys": [
+    "fixdns"
+   ]
+  },
+  "cable": {
+   "emoji": "🐊",
+   "name": "Damaged cable",
+   "group": "systems",
+   "ttl": 60,
+   "concept": "physical",
+   "kinds": [
+    "switch",
+    "router",
+    "balancer",
+    "cdn",
+    "server"
+   ],
+   "symptom": "20% packet loss and CRC errors on one port. A crocodile chewed the patch cable.",
+   "responses": {
+    "replacecable": {
+     "effect": "fix",
+     "note": "New cable fitted; the CRC errors are gone. It was the physical layer."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Software restarts don't fix a damaged cable (layer 1)."
+    }
+   },
+   "decoys": [
+    "fixroute"
+   ]
+  },
+  "route": {
+   "emoji": "🧭",
+   "name": "Missing route",
+   "group": "network",
+   "ttl": 50,
+   "concept": "routing",
+   "kinds": [
+    "router",
+    "firewall"
+   ],
+   "symptom": "The router lost its route to the southern islands; packets come back as ICMP 'destination unreachable'.",
+   "responses": {
+    "fixroute": {
+     "effect": "fix",
+     "note": "The static route is restored; traffic flows again."
+    },
+    "failover": {
+     "effect": "mitigate",
+     "note": "The standby router works for now, but its routing table is stale.",
+     "secs": 30
+    }
+   },
+   "decoys": [
+    "fixdns",
+    "ratelimit"
+   ]
+  },
+  "ddos": {
+   "emoji": "🐘",
+   "name": "DDoS flood",
+   "group": "security",
+   "ttl": 40,
+   "spreads": true,
+   "min_progress": 0.2,
+   "concept": "ddos",
+   "kinds": [
+    "cdn",
+    "balancer",
+    "auth",
+    "firewall",
+    "banana-cache",
+    "river",
+    "lake"
+   ],
+   "symptom": "Requests ×40 from thousands of sources. A stampede is hammering one endpoint.",
+   "responses": {
+    "blockacl": {
+     "effect": "fix",
+     "note": "Firewall ACL drops the attacking sources; real users get through."
+    },
+    "ratelimit": {
+     "effect": "mitigate",
+     "note": "Rate limiting buys time but also turns away some real users. The attack continues.",
+     "secs": 40
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Restarting doesn't stop traffic that is still arriving."
+    }
+   },
+   "decoys": [
+    "rollback"
+   ]
+  },
+  "worm": {
+   "emoji": "🐛",
+   "name": "Worm infection",
+   "group": "security",
+   "ttl": 50,
+   "spreads": true,
+   "min_progress": 0.25,
+   "concept": "patching",
+   "kinds": [
+    "server",
+    "terminal",
+    "ai-core",
+    "temple",
+    "vault",
+    "queue"
+   ],
+   "symptom": "An unknown process copies itself over every connection it can reach.",
+   "warning": {
+    "emoji": "🧬",
+    "text": "A worm signature is circulating and this node is unpatched.",
+    "prevent": [
+     "patch"
+    ],
+    "ttl": 75
+   },
+   "responses": {
+    "patch": {
+     "effect": "fix",
+     "note": "Patched and cleaned; the hole it used is closed."
+    },
+    "quarantine": {
+     "effect": "mitigate",
+     "note": "Isolated on its own VLAN: it can't spread, but it's still infected.",
+     "secs": 45
+    },
+    "restart": {
+     "effect": "none",
+     "note": "The worm survives reboots: it's in the startup scripts."
+    }
+   }
+  },
+  "cert": {
+   "emoji": "🔐",
+   "name": "Expired TLS certificate",
+   "group": "security",
+   "ttl": 50,
+   "concept": "tls",
+   "kinds": [
+    "auth",
+    "cdn",
+    "queue",
+    "firewall",
+    "balancer"
+   ],
+   "symptom": "Clients reject the TLS handshake: the certificate's validity date has passed.",
+   "warning": {
+    "emoji": "🔐",
+    "text": "The TLS certificate expires soon. Renew it now and nobody notices.",
+    "prevent": [
+     "rotatecert"
+    ],
+    "ttl": 80
+   },
+   "responses": {
+    "rotatecert": {
+     "effect": "fix",
+     "note": "New certificate installed; handshakes succeed."
+    },
+    "disabletls": {
+     "effect": "none",
+     "note": "Refused: turning off TLS would send passwords in clear text. Renew the certificate instead."
+    }
+   },
+   "decoys": [
+    "restart"
+   ]
+  },
+  "leak": {
+   "emoji": "📈",
+   "name": "Memory leak",
+   "group": "systems",
+   "ttl": 55,
+   "concept": "memory",
+   "kinds": [
+    "server",
+    "ai-core",
+    "terminal",
+    "queue",
+    "monkey"
+   ],
+   "symptom": "RAM use grows 2 GB a minute and the system is swapping. Something never frees its memory.",
+   "responses": {
+    "patch": {
+     "effect": "fix",
+     "note": "The code that never freed memory is fixed."
+    },
+    "restart": {
+     "effect": "mitigate",
+     "note": "Memory is freed for now; the leak will fill RAM again.",
+     "secs": 45
+    },
+    "failover": {
+     "effect": "mitigate",
+     "note": "The standby takes over with clean memory; the same bug leaks there too.",
+     "secs": 60
+    }
+   }
+  },
+  "disk": {
+   "emoji": "💾",
+   "name": "Disk full",
+   "group": "systems",
+   "ttl": 50,
+   "concept": "storage",
+   "kinds": [
+    "database",
+    "vault",
+    "lake",
+    "banana-cache",
+    "queue"
+   ],
+   "symptom": "Disk at 100%. Writes fail and logs can't rotate.",
+   "warning": {
+    "emoji": "💾",
+    "text": "Disk at 85% and climbing: old snapshots are piling up.",
+    "prevent": [
+     "cleanup"
+    ],
+    "ttl": 75
+   },
+   "responses": {
+    "cleanup": {
+     "effect": "fix",
+     "note": "Old snapshots removed; writes work again."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Rebooting doesn't create disk space."
+    }
+   }
+  },
+  "heat": {
+   "emoji": "🌡️",
+   "name": "Thermal throttling",
+   "group": "systems",
+   "ttl": 55,
+   "concept": "thermal",
+   "kinds": [
+    "server",
+    "ai-core",
+    "volcano",
+    "vault"
+   ],
+   "symptom": "CPU at 98 °C and throttling its clock speed: the vents are clogged with leaves.",
+   "responses": {
+    "clearvents": {
+     "effect": "fix",
+     "note": "Vents cleared; the temperature is back to 55 °C."
+    },
+    "restart": {
+     "effect": "mitigate",
+     "note": "It cooled while rebooting; it will heat up again.",
+     "secs": 20
+    }
+   }
+  },
+  "power": {
+   "emoji": "⚡",
+   "name": "Power supply failed",
+   "group": "systems",
+   "ttl": 35,
+   "weight": 0,
+   "concept": "redundancy",
+   "symptom": "Lightning hit the rack and the primary power supply is dead. The redundant one is idle.",
+   "responses": {
+    "failover": {
+     "effect": "fix",
+     "note": "Switched to the redundant power supply."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Nothing to restart: there's no power."
+    }
+   }
+  },
+  "deploy": {
+   "emoji": "📦",
+   "name": "Bad deploy",
+   "group": "operations",
+   "ttl": 55,
+   "concept": "rollback",
+   "kinds": [
+    "server",
+    "auth",
+    "cdn",
+    "queue",
+    "banana-cache",
+    "ai-core"
+   ],
+   "symptom": "v2.4 went out and the error rate is 30%. There was no schema change: v2.3 is still compatible.",
+   "warning": {
+    "emoji": "📅",
+    "text": "A deploy of v2.4 is scheduled. Canary it first: a bad build then reaches only a few users.",
+    "prevent": [
+     "canary"
+    ],
+    "ttl": 80
+   },
+   "responses": {
+    "rollback": {
+     "effect": "fix",
+     "note": "Back on v2.3, which is compatible: the errors stop."
+    },
+    "fallforward": {
+     "effect": "none",
+     "note": "No hotfix is ready yet. v2.3 is compatible, so rolling back is faster and safe."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Restarting runs the same broken v2.4."
+    }
+   }
+  },
+  "migration": {
+   "emoji": "📦",
+   "name": "Bad deploy with migration",
+   "group": "operations",
+   "ttl": 55,
+   "weight": 0,
+   "concept": "migration",
+   "symptom": "v2.4 migrated the database schema and the error rate is 30%. v2.3 can't read the new tables.",
+   "responses": {
+    "fallforward": {
+     "effect": "fix",
+     "note": "Hotfix v2.4.1 shipped; it works with the new schema."
+    },
+    "rollback": {
+     "effect": "none",
+     "note": "v2.3 can't read the migrated schema: rolling back would break it further."
+    }
+   },
+   "decoys": [
+    "restart"
+   ]
+  },
+  "disparity": {
+   "emoji": "⚖️",
+   "name": "Replica disparity",
+   "group": "operations",
+   "ttl": 60,
+   "min_progress": 0.2,
+   "concept": "replication",
+   "kinds": [
+    "database",
+    "vault",
+    "lake",
+    "banana-cache"
+   ],
+   "symptom": "The replicas' checksums disagree: two copies report two different banana counts.",
+   "responses": {
+    "resync": {
+     "effect": "fix",
+     "note": "Replicas re-copied from the primary; the checksums match."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "Restarting doesn't reconcile the data."
+    }
+   }
+  },
+  "loop": {
+   "emoji": "🔁",
+   "name": "Routing loop",
+   "group": "advanced",
+   "ttl": 45,
+   "min_level": 1,
+   "concept": "ipttl",
+   "kinds": [
+    "router",
+    "switch"
+   ],
+   "symptom": "Packets circle between two routers until their IP TTL (a hop count) reaches 0 and they're dropped.",
+   "responses": {
+    "fixroute": {
+     "effect": "fix",
+     "note": "The route that pointed back is fixed; packets reach their destination."
+    },
+    "restart": {
+     "effect": "mitigate",
+     "note": "Routes were relearned, but the bad static route returns.",
+     "secs": 20
+    }
+   }
+  },
+  "broadcast": {
+   "emoji": "📢",
+   "name": "Broadcast storm",
+   "group": "advanced",
+   "ttl": 40,
+   "min_level": 1,
+   "concept": "stp",
+   "kinds": [
+    "switch",
+    "balancer"
+   ],
+   "symptom": "A looped cable floods the switch with broadcasts; Spanning Tree was turned off on this switch.",
+   "responses": {
+    "enablestp": {
+     "effect": "fix",
+     "note": "STP blocked the redundant port; the storm stops."
+    },
+    "replacecable": {
+     "effect": "none",
+     "note": "The cables are fine; it's the loop they form."
+    }
+   }
+  },
+  "vlan": {
+   "emoji": "🏝️",
+   "name": "VLAN misconfiguration",
+   "group": "advanced",
+   "ttl": 55,
+   "min_level": 1,
+   "concept": "vlan",
+   "kinds": [
+    "switch",
+    "firewall"
+   ],
+   "symptom": "Ports were put on the wrong VLAN: the tree frogs can't reach their default gateway.",
+   "responses": {
+    "fixvlan": {
+     "effect": "fix",
+     "note": "Ports are back on VLAN 20; the gateway answers."
+    },
+    "restart": {
+     "effect": "none",
+     "note": "The port configuration survives a restart."
+    }
+   }
+  }
+ },
+ "actions": {
+  "restart": {
+   "emoji": "🔄",
+   "label": "Restart the service",
+   "secs": 3
+  },
+  "fixdns": {
+   "emoji": "📛",
+   "label": "Restore the DNS resolver config",
+   "secs": 4
+  },
+  "expandpool": {
+   "emoji": "🏷️",
+   "label": "Expand the DHCP pool",
+   "secs": 4
+  },
+  "replacecable": {
+   "emoji": "🔌",
+   "label": "Replace the cable",
+   "secs": 5,
+   "heavy": true,
+   "hardware": true
+  },
+  "fixroute": {
+   "emoji": "🧭",
+   "label": "Correct the routing table",
+   "secs": 5
+  },
+  "ratelimit": {
+   "emoji": "🛡️",
+   "label": "Rate-limit traffic",
+   "secs": 3
+  },
+  "blockacl": {
+   "emoji": "🚫",
+   "label": "Block attackers with an ACL",
+   "secs": 5
+  },
+  "quarantine": {
+   "emoji": "🚧",
+   "label": "Quarantine on an isolated VLAN",
+   "secs": 3
+  },
+  "patch": {
+   "emoji": "🩹",
+   "label": "Install the patch",
+   "secs": 5,
+   "maintenance": true
+  },
+  "rotatecert": {
+   "emoji": "🔑",
+   "label": "Renew the TLS certificate",
+   "secs": 3,
+   "maintenance": true
+  },
+  "disabletls": {
+   "emoji": "🔓",
+   "label": "Disable TLS",
+   "secs": 1
+  },
+  "cleanup": {
+   "emoji": "🧹",
+   "label": "Clear old snapshots",
+   "secs": 4,
+   "maintenance": true
+  },
+  "clearvents": {
+   "emoji": "🍃",
+   "label": "Clear the vents",
+   "secs": 4,
+   "heavy": true,
+   "maintenance": true,
+   "hardware": true
+  },
+  "failover": {
+   "emoji": "🔀",
+   "label": "Fail over to standby",
+   "secs": 4,
+   "hardware": true
+  },
+  "rollback": {
+   "emoji": "⏪",
+   "label": "Roll back the deploy",
+   "secs": 5
+  },
+  "fallforward": {
+   "emoji": "⏩",
+   "label": "Fall forward: ship a hotfix",
+   "secs": 8,
+   "heavy": true
+  },
+  "canary": {
+   "emoji": "🐤",
+   "label": "Canary the deploy",
+   "secs": 5,
+   "maintenance": true
+  },
+  "resync": {
+   "emoji": "🔁",
+   "label": "Resync replicas from primary",
+   "secs": 7,
+   "heavy": true
+  },
+  "enablestp": {
+   "emoji": "🌲",
+   "label": "Enable Spanning Tree",
+   "secs": 4
+  },
+  "fixvlan": {
+   "emoji": "🏝️",
+   "label": "Move ports to the right VLAN",
+   "secs": 4
+  }
+ },
+ "concepts": {
+  "timeloss": {
+   "name": "Time to Loss (game term)",
+   "text": "Lucky Monkey's own timer: seconds until the next consequence. Not IP TTL (a hop count) and not DNS TTL (how long a record may be cached)."
+  },
+  "process": {
+   "name": "Processes and ports",
+   "text": "A service is a running process listening on a port. The machine can be up (it answers ping) while the service is dead."
+  },
+  "dns": {
+   "name": "DNS",
+   "text": "The Domain Name System turns names into IP addresses. If it fails, connections by IP still work, but names don't."
+  },
+  "dhcp": {
+   "name": "DHCP",
+   "text": "DHCP hands out IP addresses from a pool, as time-limited leases. With an empty pool, new devices get no address."
+  },
+  "physical": {
+   "name": "Physical layer",
+   "text": "Layer 1: cables, ports and signals. CRC errors and packet loss on one port often mean a bad cable, which no software fixes."
+  },
+  "routing": {
+   "name": "Routing",
+   "text": "Routers forward packets using a routing table. Without a route, the packet is dropped and ICMP reports 'destination unreachable'."
+  },
+  "ddos": {
+   "name": "DDoS",
+   "text": "A distributed denial of service floods a target from many sources. Rate limits buy time; filtering the sources (ACLs) stops it."
+  },
+  "patching": {
+   "name": "Patching and segmentation",
+   "text": "Worms exploit unpatched holes and spread across the network. Isolating a node (a separate VLAN) stops the spread; patching removes the hole."
+  },
+  "tls": {
+   "name": "TLS certificates",
+   "text": "TLS encrypts connections and proves identity with a certificate that expires. Renew it before it does; never just turn encryption off."
+  },
+  "memory": {
+   "name": "Memory and swap",
+   "text": "A leak keeps claiming RAM until the system swaps to disk and crawls. A restart frees it for a while; only a code fix stops it."
+  },
+  "storage": {
+   "name": "Storage capacity",
+   "text": "A full disk makes every write fail. Rebooting doesn't free space: delete or move data, or add capacity."
+  },
+  "thermal": {
+   "name": "Thermal throttling",
+   "text": "Hot CPUs slow themselves down to survive. Cooling (airflow, clean vents) is the fix."
+  },
+  "redundancy": {
+   "name": "Redundancy and failover",
+   "text": "A spare component (a second power supply, a standby server) takes over when the primary fails, if one was there to begin with."
+  },
+  "rollback": {
+   "name": "Rollback",
+   "text": "Undo a bad change by going back to the previous version, as long as that version still works with today's data."
+  },
+  "migration": {
+   "name": "Schema migrations",
+   "text": "A deploy that changes the database schema can't simply be rolled back: the old version can't read the new tables. Fix forward."
+  },
+  "replication": {
+   "name": "Replication",
+   "text": "Replicas are copies of a database. When they disagree, re-copy them from the authoritative primary."
+  },
+  "ipttl": {
+   "name": "IP TTL",
+   "text": "Each IP packet carries a TTL hop count; every router subtracts 1, and at 0 the packet is dropped. That stops a routing loop from circling forever."
+  },
+  "stp": {
+   "name": "Spanning Tree",
+   "text": "STP finds loops between switches and blocks a redundant port, so broadcasts can't circle and multiply into a storm."
+  },
+  "vlan": {
+   "name": "VLANs",
+   "text": "VLANs split one switch into separate networks. A port on the wrong VLAN can't reach its own subnet's default gateway."
+  }
+ },
+ "notices": [
+  {
+   "text": "Nightly backup completed on {node}.",
+   "kinds": [
+    "database",
+    "vault",
+    "lake"
+   ]
+  },
+  {
+   "text": "Cache hit ratio 94% at {node}: most requests never touch the database.",
+   "kinds": [
+    "banana-cache",
+    "cdn"
+   ]
+  },
+  {
+   "text": "{node}: CPU 61 °C, a little warm but within limits.",
+   "kinds": [
+    "server",
+    "ai-core"
+   ]
+  },
+  {
+   "text": "Unusual traffic to {node}: just the tree frogs' weekly sync.",
+   "kinds": [
+    "switch",
+    "router"
+   ]
+  },
+  {
+   "text": "{node} renewed 3 DHCP leases.",
+   "kinds": [
+    "river",
+    "switch"
+   ]
+  },
+  {
+   "text": "{node}: cached DNS records expired after their TTL (300 s) and were refreshed.",
+   "kinds": [
+    "dns"
+   ]
+  },
+  {
+   "text": "Bandwidth between the islands at 40%: plenty of headroom.",
+   "kinds": []
+  },
+  {
+   "text": "{node}: ARP table refreshed, 17 neighbours known.",
+   "kinds": [
+    "switch",
+    "router"
+   ]
+  },
+  {
+   "text": "Toucans report clear skies over {node}.",
+   "kinds": []
+  }
+ ],
+ "criticality": {
+  "router": 5,
+  "dns": 4,
+  "monkey": 3,
+  "auth": 3,
+  "firewall": 3,
+  "database": 3,
+  "monitor": 2,
+  "balancer": 2,
+  "cdn": 2
+ },
+ "node_colors": {
+  "monkey": "#22c55e",
+  "banana-cache": "#facc15",
+  "temple": "#15803d",
+  "server": "#4b5563",
+  "river": "#0ea5e9",
+  "router": "#a855f7",
+  "firewall": "#ef4444",
+  "database": "#3b82f6",
+  "volcano": "#dc2626",
+  "ai-core": "#8b5cf6",
+  "vault": "#6366f1",
+  "switch": "#14b8a6",
+  "terminal": "#64748b",
+  "lizard": "#84cc16",
+  "lake": "#0284c7",
+  "dns": "#b91c1c",
+  "balancer": "#db2777",
+  "queue": "#0891b2",
+  "monitor": "#d97706",
+  "auth": "#7c3aed",
+  "cdn": "#059669"
+ },
+ "roles": {
+  "monkey": "The Guardian: a core hub. Many paths run through it.",
+  "router": "A router forwards packets between networks using its routing table. If it fails, everything that reaches the rest of the network through it is cut off.",
+  "river": "A network segment where devices join, get addresses (DHCP) and talk to each other.",
+  "banana-cache": "A cache keeps copies of frequently used data close by, so requests don't have to go all the way to the database.",
+  "temple": "An application server: runs services that other nodes call.",
+  "server": "A general-purpose server running services. Can crash, leak memory or overheat.",
+  "firewall": "A firewall allows or blocks traffic by rules (ACLs). The first line against attacks.",
+  "database": "A database stores records, often as several replicas that must agree.",
+  "volcano": "A high-performance compute node: fast, hot, and sensitive to cooling.",
+  "ai-core": "A compute node running heavy workloads.",
+  "vault": "Backup storage. Backups only count if they can be restored.",
+  "switch": "A switch connects devices on the same network and forwards frames by MAC address. Loops between switches cause broadcast storms unless Spanning Tree blocks them.",
+  "terminal": "A client machine: a user's view of the network.",
+  "lizard": "A monitoring probe watching a segment.",
+  "lake": "A data lake: large, cheap storage for raw data and analytics.",
+  "dns": "A DNS server turns names into IP addresses. Without it, names stop working even though the network is fine.",
+  "balancer": "A load balancer spreads requests across several servers so none is overloaded.",
+  "queue": "A message queue holds messages in order until consumers are ready, smoothing out bursts.",
+  "monitor": "Monitoring: collects metrics and warns before things break. If it's unreachable you lose your warnings.",
+  "auth": "Authentication: checks identities and holds TLS certificates others trust.",
+  "cdn": "A content delivery network caches content close to users."
+ },
+ "call_cost": 3
+}

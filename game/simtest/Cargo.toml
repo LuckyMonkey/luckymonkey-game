@@ -1,0 +1,12 @@
+[package]
+name = "lm-simtest"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Headless tests and balancing runs for game/src/sim.rs (no Bevy)"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[workspace]
