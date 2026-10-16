@@ -5,7 +5,7 @@ title: Lucky Monkey - on-call design (director, crew, Time to Loss)
 # On-call design pass
 
 Why the game plays the way it does after the pacing/education pass, and where
-each rule lives. Status: **live** at <https://go.fridge.run/luckymonkey> (deployed 2026-10-16).
+each rule lives. Status: on main (2026-10-16); the live site updates on the next `tools/deploy.sh`.
 
 ## Architecture
 
