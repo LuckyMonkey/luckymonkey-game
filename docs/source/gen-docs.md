@@ -23,7 +23,8 @@ GAME = "https://go.fridge.run/luckymonkey"
 T = json.load(open(os.path.join(ROOT, "game/data/tuning.json")))
 NODES = json.load(open(os.path.join(ROOT, "game/data/nodes.json")))["nodes"]
 ISLES = json.load(open(os.path.join(ROOT, "game/data/islands.json")))
-A, F, C = T["actions"], T["faults"], T["concepts"]
+A, C = T["actions"], T["concepts"]
+F = {k: f for k, f in T["faults"].items() if k != "upstream"}
 BYID = {n["id"]: n for n in NODES}
 # Ember and Watch sit off the river with no bridge; links reach them as ropes.
 PLACE = {"ember": "free-floating", "watch": "free-floating"}
@@ -64,7 +65,12 @@ def failures():
         "- A **warning stage** (📅 🧬 🔐 💾 …) means you can see it coming and *prevent* it: nothing is broken yet.",
         "- **Fix** removes the root cause. **Mitigate** buys the stated seconds, then the fault comes back. "
         "**No effect** costs you the time and your combo, and the game explains why it didn't help.",
-        "- 🔍 **Diagnose** shows what every option would do before you commit, and teaches the concept.",
+        "- 🔍 **Diagnose** shows what every option would do before you commit, and teaches the concept. "
+        "A 🍌 **hint** just marks the right one.",
+        "- **How it started:** every incident opens with a plausible origin story (one is picked from the list below).",
+        "- **Spread:** left alone, an incident hurts its neighbours as its Time to Loss runs down (at ⅔ and ⅓ left, and "
+        "again when it goes down). They show a 📉 **symptom** with nothing to fix locally, and clear the moment the "
+        "origin is fixed. Worms are contagious instead: they infect neighbours for real.",
         "- **Time to Loss** is the game's own countdown to the next consequence "
         "([not IP TTL or DNS TTL](glossary.md)). Levels scale it (training ×1.3, shift 3+ ×0.85, practice ×3).", "",
         "Every section has a ▶ **live** link that starts a shift with that fault staged on a real node.", "",
@@ -80,7 +86,7 @@ def failures():
         prev = f"yes: {w['emoji']} → " + ", ".join(act(p) for p in w.get("prevent", [])) if w else "no"
         if k == "power":
             prev = "no (lightning)"
-        out.append(f"| {f['emoji']} [{f['name']}](#{anchor(f['name'])}) | {f['group']} | {f['ttl']} s | {fx} | {mi} | {prev} | {'yes, once' if f.get('spreads') else 'no'} |")
+        out.append(f"| {f['emoji']} [{f['name']}](#{anchor(f['name'])}) | {f['group']} | {f['ttl']} s | {fx} | {mi} | {prev} | {'contagious' if f.get('spreads') else 'symptoms'} |")
     out.append("")
     for k, f in F.items():
         n = live_node(f)
@@ -90,6 +96,10 @@ def failures():
                    + (", ".join(f"`{x}`" for x in f.get("kinds", [])) or "any node")
                    + f" · ▶ [live on {n['name']}]({link})")
         out += ["", f"**Symptom:** {f['symptom']}", ""]
+        if f.get("origin"):
+            out += ["**How it starts:** " + " · ".join(f"*{o.replace('{node}', 'the node')}*" for o in f["origin"]), ""]
+        if f.get("effect"):
+            out += [f"**What its neighbours suffer:** {f['effect'].replace('{origin}', 'the origin')}.", ""]
         w = f.get("warning")
         if w:
             wl = f"{GAME}#node={n['id']}&forecast={k}&zoom=1.2"
@@ -98,12 +108,13 @@ def failures():
         out += ["| Response | Effect | Why |", "|---|---|---|"]
         for a, v in f.get("responses", {}).items():
             eff = {"fix": "✅ fix", "mitigate": f"🩹 mitigate, {v.get('secs')} s", "none": "✖ no effect"}[v["effect"]]
-            out.append(f"| {act(a)} ({A.get(a, {}).get('secs', '?')} s of work) | {eff} | {v.get('note', '')} |")
+            cmd = A.get(a, {}).get("cmd", "")
+            out.append(f"| {act(a)}" + (f"<br>`{cmd}`" if cmd else "") + f" | {eff} | {v.get('note', '')} |")
         for d in f.get("decoys", []):
             out.append(f"| {act(d)} | ✖ no effect | A real tool for a different problem. |")
         out.append("")
         if f.get("spreads"):
-            out += [f"**Spreads:** {T['director']['spread_after']} s after its node goes down, it jumps once to a healthy neighbour.", ""]
+            out += ["**Contagious:** as its timer runs down it infects healthy neighbours with the same fault, each needing its own fix.", ""]
         c = C.get(f.get("concept", ""))
         if c:
             out += [f"**Concept, {c['name']}:** {c['text']}", ""]

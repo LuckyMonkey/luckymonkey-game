@@ -24,8 +24,9 @@ real systems thinking:
   [replicas that disagree](failures.md#replica_disparity),
   and [deploys that can be rolled back, and deploys that cannot](failures.md#bad_deploy).
 
-You run a crew (a monkey, a parrot, a sloth and a tree frog), read the symptoms,
-pick the fix, and race the big red **Time to Loss**. Some problems you can see
+You run a crew (a monkey, a parrot, a sloth, a tree frog and an elephant), trace
+each problem back to where it started, run the fix like a real command, and race
+the big red **Time to Loss**. Some problems you can see
 coming and prevent. Others you can only react to. And before any of that, you can
 **tour the whole network** node by node, with its lore, or **practise** with no
 pressure.

@@ -13,14 +13,18 @@ Terms used across these pages, each with where to read more.
 | **Shift** | One game: 09:00 to 17:00, 8 real minutes | [How to play](gameplay.md#the_shift) |
 | **Network health** | Right now: online 1, degraded 0.5, unreachable 0.3, down 0, weighted by criticality | [The shift](gameplay.md#the_shift) |
 | **Shift SLA** | The average network health over the shift; target 95%. In real life, a [service level agreement](https://en.wikipedia.org/wiki/Service-level_agreement) | [The shift](gameplay.md#the_shift) |
-| **Time to Loss** ⏳ | The game's own countdown to the next consequence. **Not** IP TTL (a hop count) and **not** DNS TTL (how long a record may be cached) | [Trouble](gameplay.md#trouble) |
-| **Warning** | Trouble you can see coming and prevent; nothing broken yet | [Trouble](gameplay.md#trouble) |
-| **Incident** 🚨 | A node degraded by a fault, counting down to down | [Trouble](gameplay.md#trouble) |
+| **Time to Loss** ⏳ | The game's own countdown to the next consequence. **Not** IP TTL (a hop count) and **not** DNS TTL (how long a record may be cached) | [Trouble](gameplay.md#trouble_starts_somewhere_and_spreads) |
+| **Warning** | Trouble you can see coming and prevent; nothing broken yet | [Trouble](gameplay.md#trouble_starts_somewhere_and_spreads) |
+| **Incident** 🚨 | A node degraded by a fault, counting down to down | [Trouble](gameplay.md#trouble_starts_somewhere_and_spreads) |
 | **Root cause / impact** | The fault itself vs what it does to others (unreachable nodes have no fault of their own) | [Simulation](simulation.md#healthroot_causes_vs_impacts) |
-| **Fix / mitigate** | Remove the cause vs buy time | [Responding](gameplay.md#responding) |
-| **Diagnose** 🔍 | Inspect first: shows what each option would do | [Responding](gameplay.md#responding) |
+| **Fix / mitigate** | Remove the cause vs buy time | [Responding](gameplay.md#respondinga_command_and_its_verdict) |
+| **Diagnose** 🔍 | Inspect first: shows what each option would do | [Responding](gameplay.md#respondinga_command_and_its_verdict) |
 | **Director** | Decides when new trouble arrives, and holds back when you're swamped | [The director](gameplay.md#the_directorwhy_it_never_piles_on_unfairly) |
-| **Crew** | Mango 🐵, Pip 🦜, Moss 🦥, Fern 🐸 | [Your crew](gameplay.md#your_crew) |
+| **Crew** | Mango 🐵, Pip 🦜, Moss 🦥, Fern 🐸, Tusk 🐘: each runs one response at a time | [Your crew](gameplay.md#your_crew) |
+| **Origin** | Where a problem started, and why (shown as "How it started") | [Trouble](gameplay.md#trouble_starts_somewhere_and_spreads) |
+| **Symptom** 📉 | A neighbour suffering from an origin's problem; nothing to fix there, it clears when the origin is fixed | [Trouble](gameplay.md#trouble_starts_somewhere_and_spreads) |
+| **Hint** 🍌 | A banana marks the response that fixes the problem | [Responding](gameplay.md#respondinga_command_and_its_verdict) |
+| **Run** | A response being carried out: a typed command, its output, a health check, a verdict | [Responding](gameplay.md#respondinga_command_and_its_verdict) |
 | **Tour / Practice** | Learn the network with nothing breaking / one problem at a time | [Learn first](gameplay.md#learn_the_network_before_you_play) |
 | **Edge pins** | Off-screen nodes shown as their icon on the screen edge | [All the keys](gameplay.md#all_the_keys) |
 | **Data frames** | The little boxes streaming along links and the river | [The world](world.md#water_effects) |

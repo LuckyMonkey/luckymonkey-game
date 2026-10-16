@@ -8,20 +8,14 @@
  "points_fix": 100,
  "points_prevent": 150,
  "points_per_ttl_sec": 2,
- "bananas_start": 2,
+ "bananas_start": 3,
  "banana_fix": 1,
  "banana_prevent": 1,
- "swing_cost": 1,
- "swing_speed": 900,
- "rally_cost": 2,
- "diagnose_secs": 3,
- "queue_max": 3,
  "lightning_range": 110,
  "lightning_chance": 0.35,
  "director": {
   "grace": 15,
   "health_floor": 0.6,
-  "spread_after": 30,
   "notice_every": 22,
   "levels": [
    {
@@ -38,71 +32,58 @@
     ],
     "warning_share": 0.5,
     "ttl_mult": 3.0,
-    "crew": [
-     "Mango",
-     "Pip",
-     "Moss",
-     "Fern"
-    ]
+    "crew": []
    },
    {
     "name": "Shift 1: training",
     "tutorial": true,
     "first": 10,
     "interval": [
-     40,
+     48,
+     34
+    ],
+    "max_roots": [
+     1,
+     1
+    ],
+    "warning_share": 0.5,
+    "ttl_mult": 1.3,
+    "crew": []
+   },
+   {
+    "name": "Shift 2",
+    "first": 15,
+    "interval": [
+     42,
      28
     ],
     "max_roots": [
      1,
      2
     ],
-    "warning_share": 0.5,
-    "ttl_mult": 1.3,
-    "crew": [
-     "Mango",
-     "Pip"
-    ]
-   },
-   {
-    "name": "Shift 2",
-    "first": 15,
-    "interval": [
-     32,
-     20
-    ],
-    "max_roots": [
-     1,
-     3
-    ],
     "warning_share": 0.45,
     "ttl_mult": 1.1,
-    "crew": [
-     "Mango",
-     "Pip",
-     "Moss"
-    ]
+    "crew": []
    },
    {
     "name": "Shift 3+",
     "first": 10,
     "interval": [
-     24,
-     13
+     34,
+     22
     ],
     "max_roots": [
-     2,
-     4
+     1,
+     3
     ],
     "warning_share": 0.4,
     "ttl_mult": 0.85,
-    "crew": [
-     "Mango",
-     "Pip",
-     "Moss",
-     "Fern"
-    ]
+    "crew": []
    }
+  ],
+  "cascade_at": [
+   0.66,
+   0.33
   ]
  },
  "workers": [
@@ -110,81 +91,84 @@
    "name": "Mango",
    "species": "monkey",
    "emoji": "🐵",
-   "role": "Field technician: walks the links, fixes anything, swings on vines for 🍌.",
+   "role": "Field technician: good at everything. Runs any response at normal speed.",
    "home": "monkey-statue",
    "speed": 300,
-   "work": 1.0,
-   "stamina": 5,
-   "rest": 14
+   "work": 1.0
   },
   {
    "name": "Pip",
    "species": "parrot",
    "emoji": "🦜",
-   "role": "Scout: flies straight over the void and diagnoses fast; too small for heavy work.",
+   "role": "Scout: flies straight over the void and diagnoses twice as fast; too small for heavy work.",
    "home": "watchtower",
    "speed": 420,
    "flies": true,
    "work": 1.4,
    "diagnose_work": 0.5,
-   "can_heavy": false,
-   "stamina": 6,
-   "rest": 10
+   "can_heavy": false
   },
   {
    "name": "Moss",
    "species": "sloth",
    "emoji": "🦥",
-   "role": "Maintenance: slow to travel, twice as fast at preventive work (certificates, patches, clean-ups, canaries).",
+   "role": "Maintenance: twice as fast at preventive work (certificates, patches, clean-ups, canaries).",
    "home": "banana-sector",
    "speed": 110,
    "work": 1.2,
-   "maintenance_work": 0.5,
-   "stamina": 4,
-   "rest": 16
+   "maintenance_work": 0.5
   },
   {
    "name": "Fern",
    "species": "tree frog",
    "emoji": "🐸",
-   "role": "Hardware specialist: hops fast between nodes and is twice as quick with cables, vents and power; too small for deploys and databases.",
+   "role": "Hardware: twice as fast with cables, vents and power; hops quickly between nodes.",
    "home": "switch-01",
    "speed": 360,
    "work": 1.3,
    "hardware_work": 0.5,
-   "can_heavy": true,
-   "stamina": 5,
-   "rest": 12
+   "can_heavy": true
+  },
+  {
+   "name": "Tusk",
+   "species": "elephant",
+   "emoji": "🐘",
+   "role": "Heavy lifter: deploys, rollbacks, databases and replicas twice as fast; never forgets a runbook.",
+   "home": "database-cluster",
+   "speed": 150,
+   "work": 1.1,
+   "heavy_work": 0.5,
+   "can_heavy": true
   }
  ],
  "tutorial": [
   {
    "fault": "crash",
    "node": "terminal-01",
-   "coach": "A service crashed. Press Space (or click the 💻 terminal), then pick 🔄 Restart. A worker walks there and fixes it."
+   "coach": "A service crashed. Press Space (or click the 💻 terminal) and pick 🔄 Restart: a crew member runs it. Left alone, it starts hurting its neighbours."
   },
   {
    "fault": "dns",
    "node": "dns-shrine",
-   "coach": "Names don't resolve but IPs work: that's DNS. Not sure? 🔍 Diagnose (I) shows which option fixes the cause."
+   "coach": "Names don't resolve but IPs work: that's DNS. Not sure? 🍌 H buys a hint, or 🔍 I diagnoses."
   },
   {
    "fault": "cert",
    "node": "auth-gate",
    "warning": true,
-   "coach": "A WARNING: nothing is broken yet. The big TIME TO LOSS timer counts down. Renew the certificate before it hits; Moss 🦥 is fastest at maintenance."
+   "coach": "A WARNING: nothing is broken yet. Renew the certificate before the timer hits; Moss 🦥 is fastest at maintenance."
   },
   {
    "fault": "dhcp",
    "node": "logical-lagoon",
-   "coach": "Two at once! Pick a worker in the roster (Z/X/C) before choosing a fix, so each one takes a different job."
+   "coach": "Two at once! Each crew member runs one thing at a time, so both can be handled in parallel."
   },
   {
    "fault": "disk",
    "node": "data-archive",
    "warning": true,
    "with_previous": true,
-   "coach": "Two at once! Pick a worker in the roster (Z/X/C) before choosing a fix, so each one takes a different job."
+   "coach": "Two at once! Each crew member runs one thing at a time, so both can be handled in parallel."
   }
  ],
  "faults": {
@@ -205,7 +189,13 @@
    "decoys": [
     "cleanup",
     "rotatecert"
-   ]
+   ],
+   "origin": [
+    "A nightly job on {node} ran out of file handles and the service exited.",
+    "{node} hit an unhandled error after the morning traffic spike.",
+    "A config reload on {node} went wrong and the process died."
+   ],
+   "effect": "every call it makes to {origin} is refused"
   },
   "dns": {
    "emoji": "📛",
@@ -232,7 +222,12 @@
    "decoys": [
     "replacecable",
     "expandpool"
-   ]
+   ],
+   "origin": [
+    "A typo slipped into {node}'s resolver config during a 'quick' change.",
+    "{node}'s upstream resolver was swapped for one that doesn't answer."
+   ],
+   "effect": "it can't look up {origin}'s names, so its requests fail"
   },
   "dhcp": {
    "emoji": "🏷️",
@@ -260,7 +255,12 @@
    },
    "decoys": [
     "fixdns"
-   ]
+   ],
+   "origin": [
+    "A batch of new sensors joined {node} and took every free address.",
+    "Someone shrank {node}'s DHCP range while tidying up."
+   ],
+   "effect": "new devices that reach it through {origin} get no address"
   },
   "cable": {
    "emoji": "🐊",
@@ -288,7 +288,12 @@
    },
    "decoys": [
     "fixroute"
-   ]
+   ],
+   "origin": [
+    "A crocodile chewed through {node}'s uplink cable.",
+    "A falling branch crushed the cable into {node}."
+   ],
+   "effect": "its traffic through {origin} keeps getting dropped"
   },
   "route": {
    "emoji": "🧭",
@@ -315,14 +320,19 @@
    "decoys": [
     "fixdns",
     "ratelimit"
-   ]
+   ],
+   "origin": [
+    "A route to {node} was deleted during maintenance.",
+    "{node} learned a bad route from a neighbour."
+   ],
+   "effect": "packets it sends via {origin} never arrive"
   },
   "ddos": {
-   "emoji": "🐘",
+   "emoji": "🦬",
    "name": "DDoS flood",
    "group": "security",
    "ttl": 40,
-   "spreads": true,
+   "spreads": false,
    "min_progress": 0.2,
    "concept": "ddos",
    "kinds": [
@@ -334,7 +344,7 @@
     "river",
     "lake"
    ],
-   "symptom": "Requests ×40 from thousands of sources. A stampede is hammering one endpoint.",
+   "symptom": "Requests ×40 from thousands of sources. A bison stampede is hammering one endpoint.",
    "responses": {
     "blockacl": {
      "effect": "fix",
@@ -352,7 +362,12 @@
    },
    "decoys": [
     "rollback"
-   ]
+   ],
+   "origin": [
+    "A botnet of a million bison found {node} on the open internet.",
+    "Someone posted {node}'s address on a stampede forum."
+   ],
+   "effect": "the flood through {origin} is crushing it too"
   },
   "worm": {
    "emoji": "🐛",
@@ -393,7 +408,11 @@
      "effect": "none",
      "note": "The worm survives reboots: it's in the startup scripts."
     }
-   }
+   },
+   "origin": [
+    "Someone on {node} opened a banana-themed email attachment.",
+    "An unpatched service on {node} was found by a scanning worm."
+   ]
   },
   "cert": {
    "emoji": "🔐",
@@ -429,7 +448,12 @@
    },
    "decoys": [
     "restart"
-   ]
+   ],
+   "origin": [
+    "{node}'s certificate auto-renewal has been failing quietly for weeks.",
+    "{node}'s certificate was issued by hand a year ago, and nobody set a reminder."
+   ],
+   "effect": "TLS handshakes with {origin} fail"
   },
   "leak": {
    "emoji": "📈",
@@ -460,7 +484,12 @@
      "note": "The standby takes over with clean memory; the same bug leaks there too.",
      "secs": 60
     }
-   }
+   },
+   "origin": [
+    "The new release on {node} forgets to free its cache.",
+    "A slow memory leak in {node} has been growing since Monday."
+   ],
+   "effect": "its calls to {origin} time out"
   },
   "disk": {
    "emoji": "💾",
@@ -493,7 +522,12 @@
      "effect": "none",
      "note": "Rebooting doesn't create disk space."
     }
-   }
+   },
+   "origin": [
+    "{node}'s snapshots haven't been pruned since spring.",
+    "A debug log on {node} was left on, writing gigabytes an hour."
+   ],
+   "effect": "its writes to {origin} are rejected"
   },
   "heat": {
    "emoji": "🌡️",
@@ -518,7 +552,12 @@
      "note": "It cooled while rebooting; it will heat up again.",
      "secs": 20
     }
-   }
+   },
+   "origin": [
+    "The afternoon sun is on {node}'s rack and a fan is clogged with leaves.",
+    "{node}'s cooling vent is blocked by a fallen palm frond."
+   ],
+   "effect": "{origin} answers so slowly that it times out"
   },
   "power": {
    "emoji": "⚡",
@@ -537,7 +576,11 @@
      "effect": "none",
      "note": "Nothing to restart: there's no power."
     }
-   }
+   },
+   "origin": [
+    "A storm cloud's lightning struck {node}'s power supply."
+   ],
+   "effect": "it lost its link through {origin}"
   },
   "deploy": {
    "emoji": "📦",
@@ -575,7 +618,12 @@
      "effect": "none",
      "note": "Restarting runs the same broken v2.4."
     }
-   }
+   },
+   "origin": [
+    "v2.4 went out to {node} without a canary.",
+    "A Friday-afternoon deploy reached {node}."
+   ],
+   "effect": "one in three requests to {origin} returns an error"
   },
   "migration": {
    "emoji": "📦",
@@ -597,7 +645,11 @@
    },
    "decoys": [
     "restart"
-   ]
+   ],
+   "origin": [
+    "v2.4 went out to {node} with a database migration."
+   ],
+   "effect": "one in three requests to {origin} returns an error"
   },
   "disparity": {
    "emoji": "⚖️",
@@ -622,7 +674,12 @@
      "effect": "none",
      "note": "Restarting doesn't reconcile the data."
     }
-   }
+   },
+   "origin": [
+    "A replica of {node} fell behind during a network blip and nobody noticed.",
+    "Writes to {node} went to the wrong replica during a failover."
+   ],
+   "effect": "it reads stale or conflicting data from {origin}"
   },
   "loop": {
    "emoji": "🔁",
@@ -646,7 +703,12 @@
      "note": "Routes were relearned, but the bad static route returns.",
      "secs": 20
     }
-   }
+   },
+   "origin": [
+    "Two routers near {node} each think the other has the best path.",
+    "A static route on {node} points back at itself."
+   ],
+   "effect": "packets through {origin} go round in circles"
   },
   "broadcast": {
    "emoji": "📢",
@@ -669,7 +731,12 @@
      "effect": "none",
      "note": "The cables are fine; it's the loop they form."
     }
-   }
+   },
+   "origin": [
+    "Someone plugged both ends of a cable into {node}.",
+    "A redundant link was added to {node} without Spanning Tree."
+   ],
+   "effect": "the broadcast flood from {origin} swamps it"
   },
   "vlan": {
    "emoji": "🏝️",
@@ -692,74 +759,160 @@
      "effect": "none",
      "note": "The port configuration survives a restart."
     }
-   }
+   },
+   "origin": [
+    "A port change on {node} put servers in the wrong VLAN.",
+    "{node} was re-cabled and the VLAN tags weren't updated."
+   ],
+   "effect": "it can't reach anything behind {origin}"
+  },
+  "upstream": {
+   "emoji": "📉",
+   "name": "Upstream failure",
+   "group": "operations",
+   "symptom": "Nothing is wrong here: it's suffering from a problem next door.",
+   "ttl": 9999,
+   "weight": 0,
+   "concept": "origin",
+   "responses": {}
   }
  },
  "actions": {
   "restart": {
    "emoji": "🔄",
    "label": "Restart the service",
-   "secs": 3
+   "secs": 3,
+   "cmd": "systemctl restart {node}",
+   "out": [
+    "Stopping {node}.service…",
+    "Starting {node}.service…",
+    "● {node}.service - active (running)"
+   ]
   },
   "fixdns": {
    "emoji": "📛",
    "label": "Restore the DNS resolver config",
-   "secs": 4
+   "secs": 4,
+   "cmd": "cp /etc/resolv.conf.known-good /etc/resolv.conf && dig +short api.jungle",
+   "out": [
+    "'/etc/resolv.conf.known-good' -> '/etc/resolv.conf'",
+    "10.0.0.53",
+    "resolver answering in 4 ms"
+   ]
   },
   "expandpool": {
    "emoji": "🏷️",
    "label": "Expand the DHCP pool",
-   "secs": 4
+   "secs": 4,
+   "cmd": "dhcpctl pool {node} --range /23",
+   "out": [
+    "pool {node}: 254 → 510 addresses",
+    "leases free: 249",
+    "DHCPOFFER sent to 7 waiting clients"
+   ]
   },
   "replacecable": {
    "emoji": "🔌",
    "label": "Replace the cable",
    "secs": 5,
    "heavy": true,
-   "hardware": true
+   "hardware": true,
+   "cmd": "ethtool {node}:eth0 && swap-cable --port eth0",
+   "out": [
+    "Link detected: no · CRC errors: 18,442",
+    "cable swapped (cat6, 3 m)",
+    "Link detected: yes · 1000Mb/s full duplex"
+   ]
   },
   "fixroute": {
    "emoji": "🧭",
    "label": "Correct the routing table",
-   "secs": 5
+   "secs": 5,
+   "cmd": "ip route replace default via 10.0.0.1 dev eth0",
+   "out": [
+    "routing table updated",
+    "traceroute 10.9.0.1: 3 hops",
+    "0% packet loss"
+   ]
   },
   "ratelimit": {
    "emoji": "🛡️",
    "label": "Rate-limit traffic",
-   "secs": 3
+   "secs": 3,
+   "cmd": "tc qdisc add dev eth0 root tbf rate 200mbit burst 32k",
+   "out": [
+    "shaping eth0 to 200 Mbit/s",
+    "dropping 61% of inbound packets",
+    "latency 900 ms → 140 ms"
+   ]
   },
   "blockacl": {
    "emoji": "🚫",
    "label": "Block attackers with an ACL",
-   "secs": 5
+   "secs": 5,
+   "cmd": "iptables -A INPUT -m set --match-set stampede src -j DROP",
+   "out": [
+    "ipset stampede: 4,812 sources",
+    "rule added to chain INPUT",
+    "attack traffic: 38 Gbit/s → 0.2 Gbit/s"
+   ]
   },
   "quarantine": {
    "emoji": "🚧",
    "label": "Quarantine on an isolated VLAN",
-   "secs": 3
+   "secs": 3,
+   "cmd": "switchctl move {node} --vlan 666-quarantine",
+   "out": [
+    "{node} moved to VLAN 666",
+    "outbound blocked except updates",
+    "lateral traffic: 0"
+   ]
   },
   "patch": {
    "emoji": "🩹",
    "label": "Install the patch",
    "secs": 5,
-   "maintenance": true
+   "maintenance": true,
+   "cmd": "apt-get install --only-upgrade jungle-runtime",
+   "out": [
+    "Unpacking jungle-runtime (2.4.7)…",
+    "Setting up jungle-runtime (2.4.7)…",
+    "service reloaded, 0 errors"
+   ]
   },
   "rotatecert": {
    "emoji": "🔑",
    "label": "Renew the TLS certificate",
    "secs": 3,
-   "maintenance": true
+   "maintenance": true,
+   "cmd": "certbot renew --cert-name {node} && systemctl reload {node}",
+   "out": [
+    "Renewing an existing certificate for {node}.jungle",
+    "Certificate valid until 2027-01-14",
+    "reload OK"
+   ]
   },
   "disabletls": {
    "emoji": "🔓",
    "label": "Disable TLS",
-   "secs": 1
+   "secs": 1,
+   "cmd": "sed -i 's/tls on/tls off/' /etc/{node}.conf",
+   "out": [
+    "refused by policy: TLS can't be disabled in production",
+    "(credentials would cross the jungle in clear text)"
+   ]
   },
   "cleanup": {
    "emoji": "🧹",
    "label": "Clear old snapshots",
    "secs": 4,
-   "maintenance": true
+   "maintenance": true,
+   "cmd": "snapctl prune {node} --older-than 30d",
+   "out": [
+    "deleted 112 snapshots",
+    "freed 1.8 TB",
+    "disk: 99% → 41%"
+   ]
   },
   "clearvents": {
    "emoji": "🍃",
@@ -767,46 +920,94 @@
    "secs": 4,
    "heavy": true,
    "maintenance": true,
-   "hardware": true
+   "hardware": true,
+   "cmd": "ipmitool sensor && blow-dust --rack {node}",
+   "out": [
+    "inlet 47 °C · fan 2: 900 rpm",
+    "removed 2 handfuls of leaves",
+    "inlet 31 °C · fans normal"
+   ]
   },
   "failover": {
    "emoji": "🔀",
    "label": "Fail over to standby",
    "secs": 4,
-   "hardware": true
+   "hardware": true,
+   "cmd": "haproxyctl failover {node} --to standby",
+   "out": [
+    "draining {node}-a…",
+    "promoting {node}-b",
+    "health checks: 3/3 passing"
+   ]
   },
   "rollback": {
    "emoji": "⏪",
    "label": "Roll back the deploy",
-   "secs": 5
+   "secs": 5,
+   "cmd": "deployctl rollback {node} --to v2.3",
+   "out": [
+    "switching {node} to v2.3",
+    "canaries healthy",
+    "error rate 30% → 0.2%"
+   ]
   },
   "fallforward": {
    "emoji": "⏩",
    "label": "Fall forward: ship a hotfix",
    "secs": 8,
-   "heavy": true
+   "heavy": true,
+   "cmd": "deployctl ship {node} v2.4.1-hotfix",
+   "out": [
+    "building v2.4.1-hotfix…",
+    "migration 0042 already applied: forward only",
+    "error rate 30% → 0.3%"
+   ]
   },
   "canary": {
    "emoji": "🐤",
    "label": "Canary the deploy",
    "secs": 5,
-   "maintenance": true
+   "maintenance": true,
+   "cmd": "deployctl canary {node} v2.4 --percent 5",
+   "out": [
+    "v2.4 → 5% of traffic",
+    "watching error rate for 60 s…",
+    "canary gate armed"
+   ]
   },
   "resync": {
    "emoji": "🔁",
    "label": "Resync replicas from primary",
    "secs": 7,
-   "heavy": true
+   "heavy": true,
+   "cmd": "replctl resync {node}-replica --from primary",
+   "out": [
+    "comparing 2.1 M rows… 1,874 differ",
+    "streaming from primary",
+    "replicas in sync · lag 0 s"
+   ]
   },
   "enablestp": {
    "emoji": "🌲",
    "label": "Enable Spanning Tree",
-   "secs": 4
+   "secs": 4,
+   "cmd": "switchctl stp enable --all-ports",
+   "out": [
+    "spanning tree: root bridge elected",
+    "3 redundant ports blocked",
+    "broadcast rate: 98% → 2%"
+   ]
   },
   "fixvlan": {
    "emoji": "🏝️",
    "label": "Move ports to the right VLAN",
-   "secs": 4
+   "secs": 4,
+   "cmd": "switchctl set-vlan {node} ports 1-12 --vlan 20",
+   "out": [
+    "ports 1-12: VLAN 99 → 20",
+    "ARP table rebuilt",
+    "gateway reachable"
+   ]
   }
  },
  "concepts": {
@@ -885,6 +1086,10 @@
   "vlan": {
    "name": "VLANs",
    "text": "VLANs split one switch into separate networks. A port on the wrong VLAN can't reach its own subnet's default gateway."
+  },
+  "origin": {
+   "name": "Root cause and blast radius",
+   "text": "One fault at its origin spreads effects to everything that depends on it. Fixing the symptoms downstream does nothing; fix the origin and the symptoms clear by themselves."
   }
  },
  "notices": [
@@ -1003,5 +1208,6 @@
   "auth": "Authentication: checks identities and holds TLS certificates others trust.",
   "cdn": "A content delivery network caches content close to users."
  },
- "call_cost": 3
+ "run_secs": 2.5,
+ "hint_cost": 1
 }

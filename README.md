@@ -12,7 +12,7 @@ Routers are temples, firewalls are vine gates, the database lives in a lake, and
 ![Bevy](https://img.shields.io/badge/Bevy-0.20-232326?logo=bevy&logoColor=white)
 ![WebAssembly](https://img.shields.io/badge/WebAssembly-WebGL2-654ff0?logo=webassembly&logoColor=white)
 ![Data driven](https://img.shields.io/badge/rules-live_JSON-0ea5e9)
-![Tests](https://img.shields.io/badge/sim_tests-12_passing-22c55e)
+![Tests](https://img.shields.io/badge/sim_tests-14_passing-22c55e)
 ![Faults](https://img.shields.io/badge/fault_types-18-ef4444)
 ![Nodes](https://img.shields.io/badge/nodes-28_on_8_islands-84cc16)
 
@@ -20,7 +20,7 @@ Routers are temples, firewalls are vine gates, the database lives in a lake, and
 
 </div>
 
-> *It is 09:00. You are on call. A herd of elephants is about to hit the Banana
+> *It is 09:00. You are on call. A stampede of bison is about to hit the Banana
 > Cache, a worm is reaching across the vines, and the certificate on the Auth
 > Gate expires in fifty seconds. The Watchtower can see some of it coming. Not
 > all of it.*
@@ -57,32 +57,46 @@ Things break. You read the symptoms, send someone, pick the response, and race t
 
 ![Tour mode](docs/img/oncall-tour.png)
 
-### 2. Meet your crew
+### 2. Delegate to your crew
 
-| | | Good at | Can't |
+| | | Faster at | Can't |
 |---|---|---|---|
-| 🐵 | **Mango** the monkey | anything; swings on a vine across the map for 🍌 1 | |
-| 🦜 | **Pip** the parrot | flies straight over the void; diagnoses at 2× | heavy work (deploys, databases) |
-| 🦥 | **Moss** the sloth | preventive maintenance at 2× (certs, patches, canaries) | hurrying |
-| 🐸 | **Fern** the tree frog | hardware at 2× (cables, vents, power) | |
+| 🐵 | **Mango** the monkey | good at everything | |
+| 🦜 | **Pip** the parrot | diagnosis | heavy work |
+| 🦥 | **Moss** the sloth | maintenance: certs, patches, canaries | |
+| 🐸 | **Fern** the tree frog | hardware: cables, vents, power | |
+| 🐘 | **Tusk** the elephant | heavy work: rollbacks, hotfixes, replicas | |
 
-Each has stamina, a queue of up to 3 jobs, and rests when tired. Training gives you
-Mango and Pip. Later shifts add the others, and you can call someone in for 🍌 3.
+Pick a response and a crew member **runs it straight away**, in about 2.5 s. They
+still travel to the node on the map, but nothing waits for them. Each runs one
+thing at a time, so the whole crew can work five problems at once.
 
-### 3. Fix the cause, not the symptoms
+### 3. Find the origin, not the symptoms
+
+![DNS left alone: two neighbours already failing because of it, each pointing back to the origin](docs/img/oncall-spread.png)
+
+Every problem **starts somewhere for a reason** (*"A botnet of a million bison found
+the Banana Cache on the open internet"*) and, left alone, **spreads along its
+links** as its timer runs down.
 
 - 🟡 **Warning**: nothing is broken yet. Prevent it (renew the cert, canary the deploy) for bonus points.
-- 🔴 **Incident**: the node is degraded and counting down. At 0 it goes **down**.
-- ⚫ **Down**: worms and floods can now spread to a neighbour.
-- 🩶 **Unreachable**: a node that's fine but cut off because something upstream is down. It's an *impact*, not a fault, and it recovers by itself when you fix the cause.
+- 🔴 **Incident**: the origin. It's degraded and counting down; at 0 it goes **down**.
+- 📉 **Symptom**: a neighbour suffering from it. Nothing to fix there: **O** jumps to the origin, and fixing the origin clears every symptom at once.
+- 🐛 **Worms** are contagious: they infect neighbours for real.
+- 🩶 **Unreachable**: fine, but cut off because the only path runs through a down node.
 
-For every problem you get four responses. One is the **fix** ✅, some **mitigate** 🩹
-(buy time, then the fault returns), and some do **nothing** ✖ for this problem
-(and the game tells you why). Not sure? 🔍 **Diagnose** first.
+### 4. Run the command, read the verdict
+
+![Four responses to the same DDoS: two wrong, one that buys time, one that fixes it](docs/img/oncall-terminal.png)
+
+Pick one of four responses. The terminal types the real command, streams its
+output, runs a health check, and then says **✅ CORRECT**, **🩹 PARTLY** (it bought
+time) or **❌ NOT THE FIX**, with the reason. Not sure? 🍌 **H** spends a banana on a
+hint, or 🔍 **I** diagnoses every option.
 
 ![Diagnosed: every option labelled with what it would do](docs/img/oncall-diagnosed.png)
 
-### 4. Keep the SLA
+### 5. Keep the SLA
 
 **Network health** is the network right now. **Shift SLA** is its average over the
 shift, and you need **95%** to pass and unlock the next level. At the end you get
@@ -94,7 +108,7 @@ when its Time to Loss ran out, cutting off 27 other service(s)"*), and your shif
 ### ⌨️ Keys
 
 `Enter` start · `Space` most urgent · `Tab` cycle problems · `1-4` respond · `I` diagnose ·
-`Z X C V` pick a worker · `G` send · `K` call in · `R` rally · `J` vine swing · `Backspace` cancel ·
+`H` 🍌 hint · `O` go to the origin · `Z X C V N` pick a crew member · `G` send ·
 arrows hop nodes · `Q/E` islands · `WASD`/drag pan · wheel/pinch zoom · `F` follow
 
 📱 On a phone: drag, pinch, tap a node, tap a response. Off-screen nodes become
@@ -121,7 +135,8 @@ answer is the first move an experienced operator would make.
 | 💥 Service crashed → 🔄 restart | a process can die while the machine still answers ping |
 | 📛 Names don't resolve, IPs work → fix DNS | the classic *"it's always DNS"* |
 | 🏷️ New devices get no address → expand the DHCP pool | address exhaustion |
-| 🐘 Stampede on one endpoint → block with an ACL (rate-limit only buys time) | DDoS: mitigation vs remediation |
+| 🦬 Stampede on one endpoint → block with an ACL (rate-limit only buys time) | DDoS: mitigation vs remediation |
+| 📉 Neighbours failing because of one broken node → fix the origin, not the symptoms | root cause and blast radius |
 | 🐛 Worm → patch (quarantine only buys time) | containment vs eradication |
 | 📦 Bad deploy → **roll back**; with a schema migration → **fall forward** | when rollback is and isn't safe |
 | ⚖️ Replicas disagree → resync from the primary | replication lag and split brain |
@@ -154,7 +169,7 @@ explicit that it is **not** IP TTL or DNS TTL.
   a texture atlas for the tiles. → [docs/engine.md](docs/engine.md), [docs/world.md](docs/world.md)
 - **`sim.rs` is the whole game model, with no engine.** Each frame the screen calls
   `Sim::step(dt)` and draws the result. A separate native crate, `game/simtest/`,
-  compiles the *same file* and runs 12 rule tests plus a balancing harness with bot
+  compiles the *same file* and runs 14 rule tests plus a balancing harness with bot
   players (Idle / Novice / Beginner / Expert × 4 levels × 20 seeds).
   → [docs/simulation.md](docs/simulation.md)
 - **Health is a graph walk.** After every change a breadth-first search from the core

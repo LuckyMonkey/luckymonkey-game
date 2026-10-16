@@ -1,4 +1,4 @@
-//! Behaviour tests for the simulation (spec tests A-J).
+//! Behaviour tests for the simulation.
 use lm_simtest::sim::{feed, push_event, Cat, Event, Health, Phase, Stage};
 use lm_simtest::{new_sim, node, play, Policy};
 
@@ -28,9 +28,9 @@ fn a_director_is_gentle_on_a_healthy_network() {
         let mut max_open = 0;
         while sim.clock < 60.0 {
             sim.step(0.1);
-            max_open = max_open.max(sim.open_faults());
+            max_open = max_open.max(sim.open_roots());
         }
-        assert_eq!(max_open, 1, "seed {seed}: training opened {max_open} faults in the first minute");
+        assert_eq!(max_open, 1, "seed {seed}: training opened {max_open} root causes in the first minute");
         // Shift 2, nobody acting: root causes stay within the budget and no critical event comes early.
         let mut sim = new_sim(seed);
         sim.start(2);
@@ -64,7 +64,12 @@ fn b_router_failure_is_one_root_cause_and_dependents_recover() {
     let cut = sim.unreachable();
     eprintln!("hub {} down: {cut} services unreachable", sim.nodes[core].name);
     assert!(cut >= 2, "only {cut} dependents unreachable");
-    assert_eq!(sim.open_faults(), 1, "dependents must not become separate incidents");
+    assert_eq!(sim.open_roots(), 1, "dependents must not become separate incidents");
+    for (i, f) in sim.faults.iter().enumerate() {
+        if let Some(f) = f {
+            assert!(i == core || f.cause.is_some_and(|c| c.1 == core), "{} has its own fault", sim.nodes[i].name);
+        }
+    }
     sim.order(None, core, Some("restart")).unwrap();
     run_until(&mut sim, 120.0, |s| s.faults[core].is_none());
     assert!(sim.faults[core].is_none(), "router not fixed");
@@ -118,21 +123,22 @@ fn e_travel_takes_the_expected_time() {
 }
 
 #[test]
-fn f_worker_activity_reaches_the_event_stream() {
+fn f_responses_run_without_waiting_for_travel() {
     let mut sim = staged(5);
-    let n = node(&sim, "terminal-01");
-    sim.raise(n, "crash", false, None);
-    sim.order(Some(0), n, Some("restart")).unwrap();
-    run_until(&mut sim, 120.0, |s| s.faults[n].is_none());
-    let cats: Vec<Cat> = sim.log.iter().filter(|e| e.worker == Some(0) || e.cat == Cat::Resolved).map(|e| e.cat).collect();
-    let order = [Cat::Dispatch, Cat::Arrive, Cat::Work, Cat::Resolved];
-    let mut k = 0;
-    for c in cats {
-        if k < order.len() && c == order[k] {
-            k += 1;
-        }
-    }
-    assert_eq!(k, order.len(), "missing dispatch/arrive/work/resolved in order");
+    // The node farthest from Mango.
+    let far = (0..sim.nodes.len()).max_by(|&a, &b| sim.eta(0, a).total_cmp(&sim.eta(0, b))).unwrap();
+    assert!(sim.eta(0, far) > 5.0, "test needs a distant node");
+    sim.raise(far, "crash", false, None);
+    sim.order(Some(0), far, Some("restart")).unwrap();
+    let run = sim.work_secs(0, "restart", far);
+    let took = run_until(&mut sim, 60.0, |s| s.faults[far].is_none());
+    assert!(took <= run + 0.1, "took {took:.1}s, run is {run:.1}s");
+    assert!(sim.outcome_run.is_some(), "the terminal can find the result");
+    let cats: Vec<Cat> = sim.log.iter().map(|e| e.cat).collect();
+    let d = cats.iter().position(|c| *c == Cat::Dispatch).unwrap();
+    let r = cats.iter().position(|c| *c == Cat::Resolved).unwrap();
+    assert!(d < r);
+    assert!(sim.order(Some(0), far, Some("restart")).is_err() || sim.faults[far].is_none());
 }
 
 #[test]
@@ -197,18 +203,56 @@ fn j_shift_ends_cleanly_with_real_stats() {
 }
 
 #[test]
-fn k_scenario_crew_and_call_in() {
-    let mut sim = new_sim(9);
-    sim.start(1); // training: Mango and Pip only
+fn k_whole_crew_and_banana_hints() {
+    let mut sim = staged(9);
     let on: Vec<&str> = sim.workers.iter().filter(|w| w.active).map(|w| w.name.as_str()).collect();
-    assert_eq!(on, ["Mango", "Pip"]);
-    let moss = sim.workers.iter().position(|w| w.name == "Moss").unwrap();
-    assert!(sim.order(Some(moss), 0, None).is_err(), "off-shift workers can't be ordered");
-    sim.bananas = 5;
-    sim.call_in(moss).unwrap();
-    assert!(sim.workers[moss].active);
-    assert_eq!(sim.bananas, 5 - sim.rules.call_cost);
-    assert!(sim.order(Some(moss), 0, None).is_ok());
+    assert_eq!(on, ["Mango", "Pip", "Moss", "Fern", "Tusk"]);
+    let n = node(&sim, "logical-lagoon");
+    sim.raise(n, "dhcp", false, None);
+    sim.bananas = 1;
+    sim.hint(n).unwrap();
+    assert_eq!(sim.bananas, 0);
+    assert!(sim.faults[n].as_ref().unwrap().hinted);
+    assert!(sim.hint(n).is_err(), "no second hint for the same problem");
+    let m = node(&sim, "terminal-01");
+    sim.raise(m, "crash", false, None);
+    assert!(sim.hint(m).is_err(), "no bananas, no hint");
+    // Tusk does heavy work twice as fast as Mango.
+    let tusk = sim.workers.iter().position(|w| w.name == "Tusk").unwrap();
+    assert!(sim.work_secs(tusk, "resync", n) < sim.work_secs(0, "resync", n));
+}
+
+#[test]
+fn m_trouble_spreads_from_its_origin_and_clears_with_it() {
+    let mut sim = staged(12);
+    let dns = node(&sim, "dns-shrine");
+    assert!(sim.raise(dns, "dns", false, None));
+    assert!(!sim.faults[dns].as_ref().unwrap().story.is_empty(), "every incident says how it started");
+    let id = sim.faults[dns].as_ref().unwrap().id;
+    run_until(&mut sim, 200.0, |s| s.faults.iter().flatten().filter(|f| f.is_symptom()).count() >= 2);
+    let symptoms: Vec<usize> = (0..sim.nodes.len()).filter(|&i| sim.is_symptom(i)).collect();
+    assert!(symptoms.len() >= 2, "an untouched incident spreads");
+    for &j in &symptoms {
+        assert!(sim.neighbours[dns].contains(&j), "symptoms appear next to the origin");
+        assert_eq!(sim.faults[j].as_ref().unwrap().cause, Some((id, dns)));
+        assert!(sim.order(None, j, Some("restart")).is_err(), "nothing to fix at a symptom");
+    }
+    assert_eq!(sim.open_roots(), 1);
+    sim.order(None, dns, Some("fixdns")).unwrap();
+    run_until(&mut sim, 30.0, |s| s.faults[dns].is_none());
+    assert!(sim.faults.iter().all(|f| f.is_none()), "fixing the origin clears its symptoms");
+    assert!(sim.log.iter().any(|e| e.cat == Cat::Recover && e.text.contains("once")));
+}
+
+#[test]
+fn n_worms_are_contagious() {
+    let mut sim = staged(13);
+    let n = node(&sim, "server-hub");
+    sim.raise(n, "worm", false, None);
+    run_until(&mut sim, 200.0, |s| s.faults.iter().flatten().any(|f| f.kind == "worm" && f.id != f.root));
+    let spread: Vec<_> = sim.faults.iter().flatten().filter(|f| f.kind == "worm" && f.id != f.root).collect();
+    assert!(!spread.is_empty(), "a worm left alone infects a neighbour");
+    assert!(spread[0].cause.is_none() && spread[0].story.contains("spread"), "it's a real infection with its origin named");
 }
 
 #[test]
@@ -217,8 +261,9 @@ fn l_summary_explains_right_and_wrong() {
     let n = node(&sim, "logical-lagoon");
     sim.raise(n, "dhcp", false, None);
     sim.order(None, n, Some("restart")).unwrap();
+    run_until(&mut sim, 30.0, |s| s.runs.is_empty());
     sim.order(None, n, Some("expandpool")).unwrap();
-    run_until(&mut sim, 120.0, |s| s.faults[n].is_none());
+    run_until(&mut sim, 30.0, |s| s.faults[n].is_none());
     assert!(sim.notes_bad.iter().any(|x| x.contains("didn't help")), "{:?}", sim.notes_bad);
     assert!(!sim.notes_good.is_empty(), "{:?}", sim.notes_good);
     assert_eq!(sim.score, sim.stats.points_fix + sim.stats.points_prevent + sim.stats.points_combo);

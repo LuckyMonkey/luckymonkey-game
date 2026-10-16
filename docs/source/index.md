@@ -4,7 +4,7 @@ title: Lucky Monkey source code
 
 # Source code
 
-The whole game, readable in the wiki. Each Rust file has a heading for every function, struct and impl, so the articles link straight to the lines they talk about. Generated from the code by `tools/wiki-source.py` (last: ce1704f 2026-10-16). Back to the [documentation](../index.md).
+The whole game, readable in the wiki. Each Rust file has a heading for every function, struct and impl, so the articles link straight to the lines they talk about. Generated from the code by `tools/wiki-source.py` (last: c4e7285 2026-10-16). Back to the [documentation](../index.md).
 
 **Where to start reading:** [main.rs](main.md) (how the app is put together), then [ops.rs](ops.md) (the game), starting at [the plugin](ops.md#fn_plugin) and the rules in [sim.rs](sim.md#impl_sim).
 
@@ -20,9 +20,9 @@ The whole game, readable in the wiki. Each Rust file has a heading for every fun
 | [game/src/clouds.rs](clouds.md) | Clouds drawn like the original divs; rain; storms that flash and send lightning strikes. | 8 functions, 19 items |
 | [game/src/view.rs](view.md) | The camera: pan, zoom, touch, picking nodes, following, deep-link zoom. | 11 functions, 21 items |
 | [game/src/ui.rs](ui.md) | Welcome screen, zoom buttons, hint bar, the node panel. | 19 functions, 38 items |
-| [game/src/sim.rs](sim.md) | The rules, with no Bevy: faults, responses, the incident director, crew, routing, health and SLA, scoring, the event log. Tested natively by game/simtest. | 7 functions, 40 items |
+| [game/src/sim.rs](sim.md) | The rules, with no Bevy: faults, responses, the incident director, crew, routing, health and SLA, scoring, the event log. Tested natively by game/simtest. | 9 functions, 43 items |
 | [game/src/data.rs](data.md) | Live JSON: fetches tuning/world/npcs from the page, deep-merges tuning over the built-in copy, falls back on errors. | 9 functions, 15 items |
-| [game/src/ops.rs](ops.md) | The game screen: steps the sim, HUD, Time to Loss, crew roster, alerts, log, map overlays (rope links, badges), edge pins, tour, summary, keys and clicks into orders. | 53 functions, 116 items |
+| [game/src/ops.rs](ops.md) | The game screen: steps the sim, HUD, Time to Loss, crew roster, alerts, log, map overlays (rope links, badges), edge pins, tour, summary, keys and clicks into orders. | 54 functions, 119 items |
 
 ## Around it: data, build, hosting
 

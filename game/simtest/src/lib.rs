@@ -99,7 +99,7 @@ pub fn play(seed: u64, level: usize, policy: Policy) -> (Run, Sim) {
         }
         // Faults by urgency.
         let mut open: Vec<(usize, u32, f32, bool, bool)> = (0..sim.nodes.len())
-            .filter(|&i| sim.visible(i))
+            .filter(|&i| sim.visible(i) && !sim.is_symptom(i))
             .map(|i| {
                 let f = sim.faults[i].as_ref().unwrap();
                 (i, f.id, if f.stage == Stage::Down { 0.0 } else { f.ttl }, f.diagnosed, f.mitigated > 0.0)
@@ -111,14 +111,14 @@ pub fn play(seed: u64, level: usize, policy: Policy) -> (Run, Sim) {
             if sim.clock - first < delay {
                 continue;
             }
-            let assigned = sim.workers.iter().any(|w| w.queue.iter().any(|t| t.node == i && t.fault == Some(id)));
-            if assigned {
+            let _ = id;
+            if sim.assigned(i) {
                 continue;
             }
             match policy {
                 Policy::Beginner => {
                     // One job at a time across the whole team.
-                    if sim.workers.iter().any(|w| !w.queue.is_empty()) {
+                    if !sim.runs.is_empty() {
                         break;
                     }
                     let action = if diagnosed { sim.fixes_for(i).into_iter().next() } else { Some("diagnose".to_string()) };
@@ -128,7 +128,7 @@ pub fn play(seed: u64, level: usize, policy: Policy) -> (Run, Sim) {
                     break;
                 }
                 Policy::Novice => {
-                    if sim.workers.iter().any(|w| !w.queue.is_empty()) {
+                    if !sim.runs.is_empty() {
                         break;
                     }
                     let f = sim.faults[i].as_ref().unwrap();
@@ -141,19 +141,12 @@ pub fn play(seed: u64, level: usize, policy: Policy) -> (Run, Sim) {
                 }
                 Policy::Expert => {
                     let Some(a) = sim.fixes_for(i).into_iter().find(|a| (0..sim.workers.len()).any(|w| sim.can_do(w, a))) else { continue };
-                    let free: Vec<usize> = (0..sim.workers.len()).filter(|&w| sim.workers[w].active && sim.workers[w].queue.len() < 2 && sim.can_do(w, &a)).collect();
-                    if let Some(&w) = free.iter().min_by(|&&a2, &&b2| sim.eta(a2, i).total_cmp(&sim.eta(b2, i))) {
+                    let free: Vec<usize> = (0..sim.workers.len()).filter(|&w| sim.workers[w].active && sim.busy(w).is_none() && sim.can_do(w, &a)).collect();
+                    if let Some(&w) = free.iter().min_by(|&&a2, &&b2| sim.work_secs(a2, &a, i).total_cmp(&sim.work_secs(b2, &a, i))) {
                         let _ = sim.order(Some(w), i, Some(&a));
                     }
                 }
                 Policy::Idle => {}
-            }
-        }
-        if policy == Policy::Expert {
-            for w in 0..sim.workers.len() {
-                if sim.workers[w].resting() && sim.bananas >= sim.rules.rally_cost + 2 {
-                    let _ = sim.rally(w);
-                }
             }
         }
     }

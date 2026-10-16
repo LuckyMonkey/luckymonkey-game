@@ -46,28 +46,47 @@ unreachable 0.3, down 0). Shift SLA is its time average.
 removed. The tour, the panel and the end-of-shift notes use it ("cutting off 27
 other services").
 
-## Faults
+## Faults, origins and spread
 
 A [`Fault`](source/sim.md#struct_fault) sits on one node with a
 [`Stage`](source/sim.md#enum_stage): **Warning → Incident → Down**. Each stage
 has a Time to Loss. A **mitigation** pauses it for N seconds, then the fault is
-back. Spreading faults (worm, DDoS) jump once to a healthy neighbour 30 s after
-going down. The new fault keeps the original's `root` id, so the log and the end
-screen can say "spread from".
+back.
+
+Every root cause gets a `story`, picked from its fault's `origin` list in
+tuning.json, so the log can say how it started. As an incident's Time to Loss
+passes the `cascade_at` fractions (⅔ and ⅓ left) and again when it goes down,
+[`spread`](source/sim.md#impl_sim) reaches one healthy neighbour:
+- usually as a **symptom** ([`raise_symptom`](source/sim.md#impl_sim)): a
+  `Fault` with `cause = (origin id, origin node)`, kind `upstream`, no options, no
+  timer, degraded health, and a sentence from the fault's `effect` ("it can't look
+  up the DNS Shrine's names");
+- for contagious faults (`spreads: true`, i.e. worms) as the same fault, with its
+  own fix.
+
+Fixing, preventing or mitigating the origin runs
+[`clear_symptoms`](source/sim.md#impl_sim): every symptom with that cause clears in
+one grouped "recovered on their own" line. Symptoms don't count toward the
+director's budget, so a spreading fire doesn't also bring more fresh trouble.
 
 The four options offered are the fault's own responses plus decoys, shuffled
-([`options_for`](source/sim.md#impl_sim)). The panel never says "wrong", only
-what happened and why.
+([`options_for`](source/sim.md#impl_sim)). The panel never says "wrong" before
+you try. After a run, the verdict explains what happened and why.
 
-## Workers
+## Runs and the crew
 
-A [`Worker`](source/sim.md#struct_worker) has a position, stamina, a rest timer
-and a queue of [`Task`](source/sim.md#struct_task)s. Walkers route over the
-links with [Dijkstra](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
-([`route`](source/sim.md#impl_sim)), and can't pass through a down node.
-Flyers go straight. [`eta`](source/sim.md#impl_sim) +
-[`work_secs`](source/sim.md#impl_sim) let the game pick whoever finishes first
-when you don't choose ([`pick_worker`](source/sim.md#impl_sim)).
+[`order`](source/sim.md#impl_sim) hands a response to a crew member as a
+[`Run`](source/sim.md#struct_run): it lands after
+[`work_secs`](source/sim.md#impl_sim) (`run_secs` 2.5 s × the worker's
+multiplier: specialists 0.5×), however far away the node is. The worker also heads
+there on the map ([Dijkstra](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
+over links, [`route`](source/sim.md#impl_sim); flyers go straight), but only for
+show. Each worker runs one thing at a time, and
+[`pick_worker`](source/sim.md#impl_sim) chooses the quickest free one when you
+don't. When a run lands, [`finish`](source/sim.md#impl_sim) applies it and
+`outcome_run` tells the terminal which result is its own.
+
+[`hint`](source/sim.md#impl_sim) spends `hint_cost` bananas to mark the fix.
 
 ## The director
 
@@ -82,7 +101,7 @@ like.
 ## The event log
 
 Everything that happens goes through [`push_event`](source/sim.md#fn_push_event):
-dispatch, arrival, work, results, rests, spreads and recoveries. Events of the
+dispatch, arrivals, results, spreads and recoveries. Events of the
 same group within 6 s merge into one line with a count, so a router outage is
 *one* line, "27 services unreachable", not 27. [`feed`](source/sim.md#fn_feed)
 keeps urgent lines visible longer than chatter.
@@ -91,7 +110,7 @@ keeps urgent lines visible longer than chatter.
 
     ssh fridge@fridge
     cd build/luckymonkey/game/simtest
-    cargo test --release             # 12 rule tests
+    cargo test --release             # 14 rule tests
     cargo run --release --bin balance   # 4 levels × 4 bot policies × 20 seeds
 
 The bots: **Idle** never acts, **Novice** guesses, **Beginner** diagnoses first,
@@ -99,13 +118,13 @@ The bots: **Idle** never acts, **Novice** guesses, **Beginner** diagnoses first,
 
 | Level | Idle SLA (avg/min) | Novice | Beginner | Expert | Expert recovery |
 |---|---|---|---|---|---|
-| Practice | 97.9 / 94.2 | 99.6 | 99.7 | 99.8 | 8 s |
-| Shift 1 | 91.6 / 91.6 | 99.6 | 99.6 | 99.8 | 8 s |
-| Shift 2 | 92.2 / 85.9 | 99.5 | 99.6 | 99.8 | 9 s |
-| Shift 3+ | 77.5 / 39.9 (2 of 20 collapse) | 99.1 | 99.4 | 99.7 | 8 s |
+| Practice | 95.6 / 88.0 | 99.8 | 99.8 | 99.9 | 3 s |
+| Shift 1 | 82.6 / 81.7 | 99.7 | 99.8 | 99.9 | 3 s |
+| Shift 2 | 84.8 / 68.9 (2 of 20 collapse) | 99.7 | 99.8 | 99.9 | 3 s |
+| Shift 3+ | 74.2 / 49.5 (8 of 20 collapse) | 99.7 | 99.7 | 99.9 | 3 s |
 
-Reading it: ignoring the network misses the 95% target at every real level, and
-any engaged player clears it. Skill shows in score, recovery time and
+Reading it: ignoring the network now snowballs (problems spread, symptoms pile up)
+and misses the 95% target at every real level; any engaged player clears it. Skill shows in score, recovery time and
 preventions. The bots react within seconds, so humans will score lower. A
 human playtest is still the missing measurement.
 

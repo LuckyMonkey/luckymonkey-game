@@ -56,6 +56,7 @@ IP TTL (hop count) or DNS TTL (cache lifetime). The shift clock is separate.
 | 🐵 Mango, monkey | walks the links (300 px/s), vine swing for 🍌 | everything, normal speed | — |
 | 🦜 Pip, parrot | flies straight over the void (420 px/s) | diagnosis at 2× speed | heavy hands-on work |
 | 🦥 Moss, sloth | slow walker (110 px/s) | preventive maintenance at 2× | — (other work 1.2× slower) |
+| 🐘 Tusk, elephant | 150 px/s | heavy work at 2× | — |
 | 🐸 Fern, tree frog | hops fast (360 px/s) | hardware at 2× (cables, vents, power) | — |
 
 Each has stamina (jobs before a rest) and a queue of up to 3 jobs. Dispatch,
@@ -124,3 +125,26 @@ humans won't, so real SLAs will be lower.
 ![Tour](img/oncall-tour.png)
 ![Incident: red links, big Time to Loss](img/oncall-red-links.png)
 ![Game over](img/oncall-gameover.png)
+
+## Third pass: delegation, terminal, hints, origins
+
+Owner feedback: paced walking made solving feel slow; bananas should give hints,
+not movement; more workers, jungle-themed; trouble must start somewhere and
+spread in a way that makes sense, not a random fire.
+
+- **Runs instead of walks.** A response runs for `run_secs` (2.5 s; specialists
+  half) wherever the worker is. Travel is still drawn but never waited on. Vine
+  swings, rallies, stamina, queues and call-ins are gone.
+- **Terminal.** Each run is shown as a typed command (`cmd` in tuning.json), its
+  output (`out`), a health check, and a verdict: ✅ CORRECT / 🩹 PARTLY / ❌ NOT THE
+  FIX / 🔍 DIAGNOSIS, with the cause and why. A wrong command never prints a happy
+  result line.
+- **Hints.** 🍌 H marks the fix for `hint_cost` (1). Start with 3, +1 per fix or prevention.
+- **Crew of five, all on shift.** Tusk 🐘 the elephant (heavy work 2×) joins; the
+  DDoS stampede became 🦬 bison so the elephant emoji isn't doing two jobs.
+- **Origins and spread.** Each root cause gets a story (`origin`). As its Time to
+  Loss passes ⅔ and ⅓ left, and when it goes down, it reaches a neighbour: a 📉
+  symptom (`effect`) that points back to the origin and clears when the origin is
+  fixed. Worms stay contagious. The director deals fewer independent root causes
+  (training 1, shift 2 up to 2, shift 3+ up to 3), so most pressure now comes from
+  problems you've left alone, which is the lesson.

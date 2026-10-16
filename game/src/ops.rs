@@ -34,9 +34,12 @@ pub struct Game {
     /// Difficulty of the next shift (training first).
     pub next_level: usize,
     guide_open: bool,
-    /// Outcome card shown (its time), and dismissed.
+    /// Map popup shown for this outcome (its time).
     outcome_seen: f32,
-    outcome_hidden: bool,
+    /// The terminal: the latest response being run, typed out, then its verdict.
+    term: Option<Term>,
+    term_hidden: bool,
+    last_run: u32,
     /// Last order error, shown in the hint line for a moment.
     pub notice: Option<(String, f32)>,
     /// Network tour: position in `tour_order`.
@@ -45,6 +48,17 @@ pub struct Game {
     /// Scores of every shift played (this browser), newest last.
     history: Vec<Played>,
     recorded: bool,
+}
+
+/// One response as a terminal session: a typed command, its output, a verdict.
+struct Term {
+    run: u32,
+    start: f32,
+    total: f32,
+    prompt: String,
+    lines: Vec<String>,
+    verdict: Option<(String, Color)>,
+    done_at: Option<f32>,
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -169,6 +183,8 @@ struct OutcomeCard;
 #[derive(Component)]
 struct OutcomeText;
 #[derive(Component)]
+struct TermVerdict;
+#[derive(Component)]
 struct GuideButton;
 #[derive(Component)]
 struct GuidePanel;
@@ -190,9 +206,9 @@ pub struct DiagnoseButton;
 #[derive(Component)]
 pub struct GoButton;
 #[derive(Component)]
-pub struct SwingButton;
+pub struct HintButton;
 #[derive(Component)]
-pub struct CancelButton(pub usize);
+pub struct OriginButton;
 /// Live countdown text (alert list and node panel).
 #[derive(Component)]
 pub struct PanelTtl(pub usize);
@@ -210,7 +226,7 @@ pub fn plugin(app: &mut App) {
         .add_systems(PostStartup, spawn_overlay)
         .add_systems(OnEnter(Screen::Playing), (spawn_hud, spawn_pins, apply_link).chain())
         .add_systems(Update, (links, frames, cards, popups, worker_tokens))
-        .add_systems(Update, (phone_column, pins, pin_clicks, outcome_card, guide, summary, tour_card).run_if(in_state(Screen::Playing)))
+        .add_systems(Update, (phone_column, pins, pin_clicks, terminal, guide, summary, tour_card).run_if(in_state(Screen::Playing)))
         .add_systems(
             Update,
             (navigate, controls, tick, strikes, hud, ttl_box, roster, alert_list, feed, live_ttls).chain().run_if(in_state(Screen::Playing)),
@@ -264,7 +280,9 @@ fn setup(mut commands: Commands, world: Res<World>, mut rng: ResMut<Rng>) {
         next_level: 1,
         guide_open: false,
         outcome_seen: -1.0,
-        outcome_hidden: false,
+        term: None,
+        term_hidden: false,
+        last_run: 0,
         notice: None,
         tour: None,
         tour_order,
@@ -422,7 +440,8 @@ fn frames(game: Res<Game>, view: Res<ViewState>, time: Res<Time>, curves: Res<Li
     for (f, mut tf, mut sprite) in &mut q {
         let (a, b) = sim.links[f.link];
         let health = link_health(sim, f.link);
-        let flood = [a, b].into_iter().find(|&n| sim.faults[n].as_ref().is_some_and(|x| x.kind == "ddos" && x.stage != Stage::Warning && x.mitigated <= 0.0));
+        // Trouble flows visibly from an origin to the neighbour it's hurting.
+        let flood = [(a, b), (b, a)].into_iter().find(|&(o, v)| sim.faults[v].as_ref().is_some_and(|x| x.cause.is_some_and(|c| c.1 == o))).map(|(_, v)| v);
         let pts = &curves.0[f.link];
         let len = path_len(pts).max(1.0);
         let focus = link_focus(&game, &view, f.link);
@@ -458,6 +477,9 @@ fn badge_text(sim: &Sim, i: usize) -> Option<(String, String, Color)> {
             return None;
         }
         let d = sim.rules.fault(&f.kind)?;
+        if f.is_symptom() {
+            return Some(("📉".into(), "symptom".into(), AMBER));
+        }
         if f.is_warning() {
             let g = d.warning.as_ref().map_or("🔮", |w| w.emoji.as_str());
             return Some((g.into(), format!("⚠ {}s", f.ttl.ceil() as i32), AMBER));
@@ -528,26 +550,24 @@ fn worker_tokens(
         *vis = if w.active { Visibility::Inherited } else { Visibility::Hidden };
         let flies = sim.rules.workers[w.def].flies;
         let hop = if !w.walking() {
-            if w.resting() { 0.0 } else { ((t * 2.0 + tok.0 as f32).sin() * 1.5).max(0.0) }
+            ((t * 2.0 + tok.0 as f32).sin() * 1.5).max(0.0)
         } else if w.overland {
             (t * 12.0).sin().abs() * 6.0
         } else if flies {
             40.0 + (t * 8.0).sin() * 4.0
         } else {
-            let peak = (w.leg_len * 0.22).clamp(18.0, if w.swing { 240.0 } else { 90.0 });
+            let peak = (w.leg_len * 0.22).clamp(18.0, 90.0);
             (std::f32::consts::PI * w.leg).sin() * peak
         };
         // Stand beside the card; each worker on its own side so they don't overlap.
-        let side = [Vec2::new(36.0, 30.0), Vec2::new(-36.0, 34.0), Vec2::new(0.0, -46.0), Vec2::new(40.0, -30.0)][tok.0 % 4];
+        let side = [Vec2::new(36.0, 30.0), Vec2::new(-36.0, 34.0), Vec2::new(0.0, -46.0), Vec2::new(40.0, -30.0), Vec2::new(-40.0, -26.0)][tok.0 % 5];
         tf.translation = (Vec2::from(w.pos) + side + Vec2::Y * hop).extend(NODE_Z + 30.0 + tok.0 as f32 * 0.1);
-        let sleepy: f32 = if w.resting() { 0.6 } else { 1.0 };
-        tf.scale = Vec3::splat(0.5 * sleepy.max(0.85));
+        tf.scale = Vec3::splat(0.5);
     }
     for (bar, mut tf, mut vis) in &mut bars {
-        let w = &sim.workers[bar.0];
-        match w.queue.front().filter(|t| t.started && t.total > 0.0) {
-            Some(task) => {
-                let done = 1.0 - (task.left / task.total).clamp(0.0, 1.0);
+        match sim.busy(bar.0) {
+            Some(run) => {
+                let done = 1.0 - (run.left / run.total).clamp(0.0, 1.0);
                 tf.scale.x = done.max(0.02);
                 tf.translation.x = -30.0 * (1.0 - done);
                 *vis = Visibility::Inherited;
@@ -584,13 +604,13 @@ fn popups(mut commands: Commands, time: Res<Time>, mut q: Query<(Entity, &Popup,
 
 // ------------------------------------------------------------------ simulation + input
 
-fn tick(mut commands: Commands, time: Res<Time>, art: Res<Art>, mut game: ResMut<Game>) {
+fn tick(mut commands: Commands, time: Res<Time>, art: Res<Art>, world: Res<World>, mut game: ResMut<Game>) {
     game.sim.step(time.delta_secs().min(0.25));
+    terminal_feed(&mut game, &world);
     // A new outcome: a floating note on the map too.
     if let Some(o) = game.sim.outcome.clone() {
         if o.t != game.outcome_seen {
             game.outcome_seen = o.t;
-            game.outcome_hidden = false;
             let (text, color) = if o.title.starts_with("MITIGATED") {
                 ("⏱ temporary".to_string(), AMBER)
             } else if o.ok {
@@ -696,9 +716,9 @@ fn controls(
     mut view: ResMut<ViewState>,
     start_button: Query<&Interaction, (Or<(With<StartButton>, With<SummaryButton>)>, Changed<Interaction>)>,
     go_button: Query<&Interaction, (With<GoButton>, Changed<Interaction>)>,
-    swing_button: Query<&Interaction, (With<SwingButton>, Changed<Interaction>)>,
+    hint_button: Query<&Interaction, (With<HintButton>, Changed<Interaction>)>,
+    origin_button: Query<&Interaction, (With<OriginButton>, Changed<Interaction>)>,
     diagnose_button: Query<&Interaction, (With<DiagnoseButton>, Changed<Interaction>)>,
-    cancel_buttons: Query<(&Interaction, &CancelButton), Changed<Interaction>>,
     action_buttons: Query<(&Interaction, &ActionButton), Changed<Interaction>>,
     rows: Query<(&Interaction, &AlertRow), Changed<Interaction>>,
     roster_rows: Query<(&Interaction, &RosterRow), Changed<Interaction>>,
@@ -735,7 +755,7 @@ fn controls(
     }
     // Worker choice: Z/X/C or a roster row (again to clear).
     let mut choose = None;
-    for (n, k) in [KeyCode::KeyZ, KeyCode::KeyX, KeyCode::KeyC, KeyCode::KeyV].into_iter().enumerate() {
+    for (n, k) in [KeyCode::KeyZ, KeyCode::KeyX, KeyCode::KeyC, KeyCode::KeyV, KeyCode::KeyN].into_iter().enumerate() {
         if keys.just_pressed(k) && n < game.sim.workers.len() {
             choose = Some(n);
         }
@@ -766,21 +786,10 @@ fn controls(
             let level = if practice { 0 } else { game.next_level };
             game.sim.start(level);
             game.chosen = None;
-            game.outcome_hidden = true;
+            game.term = None;
             game.recorded = false;
         }
         return;
-    }
-    if keys.just_pressed(KeyCode::KeyK) {
-        let w = game.chosen.filter(|&w| !game.sim.workers[w].active).or_else(|| game.sim.workers.iter().position(|w| !w.active));
-        match w {
-            Some(w) => {
-                if let Err(e) = game.sim.call_in(w) {
-                    game.err(e);
-                }
-            }
-            None => game.err("Everyone is already on shift"),
-        }
     }
     for (i, row) in &rows {
         if *i == Interaction::Pressed {
@@ -799,34 +808,8 @@ fn controls(
         let w = game.chosen.unwrap_or(0);
         view.focus = Some(Vec2::from(game.sim.workers[w].pos));
     }
-    if keys.just_pressed(KeyCode::KeyR) {
-        let w = game.chosen.or_else(|| game.sim.workers.iter().position(|w| w.resting()));
-        if let Some(w) = w {
-            if let Err(e) = game.sim.rally(w) {
-                game.err(format!("Rally: {e}"));
-            }
-        }
-    }
-    if keys.just_pressed(KeyCode::Backspace) {
-        let w = game.chosen.or_else(|| game.sim.workers.iter().rposition(|w| w.queue.len() > 1)).unwrap_or(0);
-        if !game.sim.cancel_last(w) {
-            game.err("Nothing queued to cancel");
-        }
-    }
-    for (i, c) in &cancel_buttons {
-        if *i == Interaction::Pressed {
-            game.sim.cancel_last(c.0);
-        }
-    }
     let Some(node) = view.selected else { return };
     let chosen = game.chosen;
-    if keys.just_pressed(KeyCode::KeyJ) || swing_button.iter().any(|i| *i == Interaction::Pressed) {
-        // Only those who don't fly swing; default to Mango.
-        let w = chosen.filter(|&w| !game.sim.rules.workers[game.sim.workers[w].def].flies).unwrap_or(0);
-        if let Err(e) = game.sim.swing(w, node) {
-            game.err(format!("Swing: {e}"));
-        }
-    }
     if keys.just_pressed(KeyCode::KeyG) || keys.just_pressed(KeyCode::Enter) || go_button.iter().any(|i| *i == Interaction::Pressed) {
         if let Err(e) = game.sim.order(chosen, node, None) {
             game.err(e);
@@ -834,6 +817,19 @@ fn controls(
     }
     if game.sim.faults[node].is_none() || !game.sim.visible(node) {
         return;
+    }
+    // A symptom: O (or the button) goes to where it comes from.
+    if let Some((_, origin)) = game.sim.faults[node].as_ref().and_then(|f| f.cause) {
+        if keys.just_pressed(KeyCode::KeyO) || origin_button.iter().any(|i| *i == Interaction::Pressed) {
+            view.selected = Some(origin);
+            view.focus = Some(game.vec(origin));
+        }
+        return;
+    }
+    if keys.just_pressed(KeyCode::KeyH) || hint_button.iter().any(|i| *i == Interaction::Pressed) {
+        if let Err(e) = game.sim.hint(node) {
+            game.err(e);
+        }
     }
     if keys.just_pressed(KeyCode::KeyI) || diagnose_button.iter().any(|i| *i == Interaction::Pressed) {
         if let Err(e) = game.sim.order(chosen, node, Some("diagnose")) {
@@ -943,7 +939,7 @@ fn spawn_hud(mut commands: Commands, art: Res<Art>, game: Res<Game>, windows: Qu
             });
             // Roster.
             col.spawn((Blocks, Interaction::default(), boxed())).with_children(|b| {
-                b.spawn((Text::new("CREW · Z/X/C/V picks who goes (again: auto) · K calls in help"), art.text(true, 10.0), TextColor(GREEN_400.with_alpha(0.8))));
+                b.spawn((Text::new("CREW · Z/X/C/V/N picks who runs it (again: auto)"), art.text(true, 10.0), TextColor(GREEN_400.with_alpha(0.8))));
                 for w in 0..game.sim.workers.len() {
                     b.spawn((
                         RosterRow(w),
@@ -999,18 +995,42 @@ fn spawn_hud(mut commands: Commands, art: Res<Art>, game: Res<Game>, windows: Qu
                 b.spawn((TtlWhat, Text::new("No immediate threats"), art.text(false, 12.0), TextColor(TEXT), TextLayout::justify(Justify::Center)));
             });
         });
-    // Outcome card: bottom centre.
+    // The terminal: bottom centre, between the left column and the node panel on wide screens.
+    let wide = width >= 900.0;
     commands
-        .spawn((Node { position_type: PositionType::Absolute, bottom: px(56), left: px(0), right: px(0), justify_content: JustifyContent::Center, ..default() }, GlobalZIndex(45)))
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: px(56),
+                left: px(if wide { 404.0 } else { 12.0 }),
+                right: px(if wide { 404.0 } else { 12.0 }),
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            GlobalZIndex(45),
+        ))
         .with_children(|c| {
             c.spawn((
                 OutcomeCard,
                 Blocks,
                 Interaction::default(),
-                Node { display: Display::None, max_width: px(460), padding: UiRect::axes(px(12), px(8)), border: UiRect::all(px(1)), border_radius: BorderRadius::all(px(8)), ..default() },
+                Node {
+                    display: Display::None,
+                    flex_direction: FlexDirection::Column,
+                    row_gap: px(4),
+                    width: percent(100),
+                    max_width: px(560),
+                    padding: UiRect::axes(px(12), px(10)),
+                    border: UiRect::all(px(2)),
+                    border_radius: BorderRadius::all(px(8)),
+                    ..default()
+                },
                 BorderColor::all(GREEN_500),
-                BackgroundColor(PANEL_BG),
-                children![(OutcomeText, Text::new(""), art.text(false, 12.0), TextColor(TEXT))],
+                BackgroundColor(Color::srgb(0.0, 0.02, 0.0)),
+                children![
+                    (OutcomeText, Text::new(""), art.text(false, 12.0), TextColor(Color::srgb(0.55, 0.95, 0.6))),
+                    (TermVerdict, Text::new(""), art.text(true, 13.0), TextColor(GREEN_400)),
+                ],
             ));
         });
     // Tour card.
@@ -1168,11 +1188,14 @@ fn next_step(game: &Game, view: &ViewState) -> String {
     }
     if let Some(sel) = view.selected.filter(|&s| sim.visible(s)) {
         let f = sim.faults[sel].as_ref().unwrap();
-        if sim.workers.iter().any(|w| w.queue.iter().any(|t| t.node == sel && t.fault == Some(f.id))) {
-            return "▶ Someone is on it. Tab: next alert".into();
+        if let Some((_, o)) = f.cause {
+            return format!("▶ Just a symptom: the cause is at {}. O jumps there.", sim.nodes[o].name);
         }
-        if !f.diagnosed && !f.is_warning() {
-            return "▶ Pick a response 1-4, or I to diagnose first (shows which one fixes the cause)".into();
+        if sim.assigned(sel) {
+            return "▶ Running… watch the terminal. Tab: next alert".into();
+        }
+        if !f.diagnosed && !f.hinted && !f.is_warning() {
+            return "▶ Pick a response 1-4 · H: 🍌 hint · I: diagnose".into();
         }
         return if f.is_warning() { "▶ Prevent it: pick the matching action 1-4 before Time to Loss runs out".into() } else { "▶ Pick a response 1-4".into() };
     }
@@ -1269,32 +1292,15 @@ fn ttl_box(
 
 fn worker_line(sim: &Sim, w: usize) -> String {
     let wk = &sim.workers[w];
-    let d = &sim.rules.workers[wk.def];
-    if !wk.active {
-        return format!("{} {:<5} off shift · K: call in ({} 🍌)", wk.emoji, wk.name.to_uppercase(), sim.rules.call_cost);
-    }
-    let stamina: String = (0..d.stamina).map(|i| if i < wk.stamina { '●' } else { '○' }).collect();
-    let state = if wk.resting() {
-        format!("💤 resting {:.0}s (R: 🍌 rally)", wk.rest)
-    } else if let Some(t) = wk.queue.front() {
-        let place = &sim.nodes[t.node].name;
-        let what = match t.action.as_deref() {
-            None => "going".to_string(),
-            Some("diagnose") => "🔍 diagnose".to_string(),
-            Some(a) => sim.rules.action(a).map_or(a.to_string(), |x| format!("{} {}", x.emoji, x.label)),
-        };
-        if t.started {
-            format!("🔧 {what} · {place} {:.0}s", t.left.max(0.0))
-        } else {
-            format!("→ {place} {:.0}s, then {what}", sim.eta(w, t.node).max(0.0))
-        }
-    } else if wk.walking() {
-        "→ moving".into()
+    let state = if let Some(r) = sim.busy(w) {
+        let what = if r.action == "diagnose" { "🔍 diagnose".to_string() } else { sim.rules.action(&r.action).map_or(r.action.clone(), |x| format!("{} {}", x.emoji, x.label)) };
+        format!("▸ {what} · {} {:.1}s", sim.nodes[r.node].name, r.left.max(0.0))
+    } else if let Some(&n) = wk.path.back() {
+        format!("→ {}", sim.nodes[n].name)
     } else {
-        format!("✓ free at {}", sim.nodes[wk.at].name)
+        format!("✓ ready at {}", sim.nodes[wk.at].name)
     };
-    let queued = if wk.queue.len() > 1 { format!("  +{} queued", wk.queue.len() - 1) } else { String::new() };
-    format!("{} {:<5} {stamina}  {state}{queued}", wk.emoji, wk.name.to_uppercase())
+    format!("{} {:<5} {state}", wk.emoji, wk.name.to_uppercase())
 }
 
 fn roster(game: Res<Game>, mut texts: Query<(&RosterText, &mut Text, &mut TextColor)>, mut rows: Query<(&RosterRow, &mut BorderColor, &mut BackgroundColor)>) {
@@ -1303,7 +1309,7 @@ fn roster(game: Res<Game>, mut texts: Query<(&RosterText, &mut Text, &mut TextCo
         if text.0 != s {
             text.0 = s;
         }
-        color.0 = if game.sim.workers[r.0].active { TEXT } else { Color::srgb(0.55, 0.6, 0.58) };
+        color.0 = if game.sim.busy(r.0).is_some() { AMBER } else { TEXT };
     }
     for (r, mut border, mut bg) in &mut rows {
         let on = game.chosen == Some(r.0);
@@ -1314,6 +1320,9 @@ fn roster(game: Res<Game>, mut texts: Query<(&RosterText, &mut Text, &mut TextCo
 
 fn stage_tag(sim: &Sim, i: usize) -> (&'static str, Color) {
     let f = sim.faults[i].as_ref().unwrap();
+    if f.is_symptom() {
+        return ("SYMP", SLATE);
+    }
     match f.stage {
         Stage::Warning => ("WARN", AMBER),
         _ if f.mitigated > 0.0 => ("HELD", AMBER),
@@ -1360,7 +1369,12 @@ fn alert_list(mut commands: Commands, art: Res<Art>, game: Res<Game>, mut seen: 
             let Some(d) = sim.rules.fault(&f.kind) else { continue };
             let (tag, color) = stage_tag(sim, i);
             let glyph = if f.is_warning() { d.warning.as_ref().map_or("🔮", |w| w.emoji.as_str()) } else { d.emoji.as_str() };
-            let who: String = sim.workers.iter().filter(|w| w.queue.iter().any(|t| t.node == i)).map(|w| w.emoji.as_str()).collect();
+            let who: String = sim.runs.iter().filter(|r| r.node == i).map(|r| sim.workers[r.worker].emoji.as_str()).collect();
+            let what = match f.cause {
+                Some((_, o)) => format!("← from {}", sim.nodes[o].name),
+                None if f.is_warning() => "warning".to_string(),
+                None => d.name.clone(),
+            };
             list.spawn((
                 AlertRow(i),
                 Interaction::default(),
@@ -1371,7 +1385,7 @@ fn alert_list(mut commands: Commands, art: Res<Art>, game: Res<Game>, mut seen: 
                 r.spawn((Text::new(tag), art.text(true, 11.0), TextColor(color), Node { min_width: px(34), ..default() }));
                 r.spawn((PanelTtl(i), Text::new(""), art.text(true, 11.0), TextColor(color), Node { min_width: px(36), ..default() }));
                 r.spawn((Text::new(glyph), TextFont { font: art.emoji.clone().into(), font_size: FontSize::Px(12.0), ..default() }));
-                r.spawn((Text::new(format!("{} · {}{}", sim.nodes[i].name, if f.is_warning() { "warning" } else { d.name.as_str() }, if who.is_empty() { String::new() } else { format!("  ← {who}") })), art.text(false, 11.0), TextColor(TEXT)));
+                r.spawn((Text::new(format!("{} · {what}{}", sim.nodes[i].name, if who.is_empty() { String::new() } else { format!("  ← {who}") })), art.text(false, 11.0), TextColor(TEXT)));
             });
         }
         if open.len() > 5 {
@@ -1388,7 +1402,7 @@ fn cat_color(c: Cat) -> Color {
         Cat::NoEffect => Color::srgb(0.95, 0.6, 0.45),
         Cat::Resolved | Cat::Recover => GREEN_400,
         Cat::Learn => Color::srgb(0.55, 0.8, 1.0),
-        Cat::Notice | Cat::Rest => Color::srgb(0.6, 0.7, 0.65),
+        Cat::Notice => Color::srgb(0.6, 0.7, 0.65),
         _ => GREEN_300,
     }
 }
@@ -1431,7 +1445,7 @@ fn live_ttls(game: Res<Game>, mut q: Query<(&PanelTtl, &mut Text)>) {
         let s = game.sim.faults[p.0].as_ref().map_or(String::new(), |f| {
             if f.mitigated > 0.0 {
                 format!("{:.0}s", f.mitigated)
-            } else if f.stage == Stage::Down {
+            } else if f.stage == Stage::Down || f.is_symptom() {
                 "—".into()
             } else {
                 format!("{:.0}s", f.ttl.max(0.0))
@@ -1443,29 +1457,128 @@ fn live_ttls(game: Res<Game>, mut q: Query<(&PanelTtl, &mut Text)>) {
     }
 }
 
-fn outcome_card(
+/// Start a terminal for each new run; attach the verdict when it lands.
+fn terminal_feed(game: &mut Game, world: &World) {
+    let sim = &game.sim;
+    if let Some(r) = sim.runs.iter().filter(|r| r.id > game.last_run).max_by_key(|r| r.id) {
+        let node = &world.nodes[r.node];
+        let wname = sim.workers[r.worker].name.to_lowercase();
+        let fill = |s: &str| s.replace("{node}", &node.id).replace("{ip}", &node.ip);
+        let (cmd, lines) = if r.action == "diagnose" {
+            let symptom = sim.fault_def(r.node).map_or(String::new(), |d| d.symptom.clone());
+            (fill("journalctl -u {node} -n 200 && netcheck {node}"), vec!["collecting logs, ports, routes and counters…".to_string(), format!("observed: {symptom}"), "matching against known failure patterns…".to_string()])
+        } else {
+            let a = sim.rules.action(&r.action);
+            let cmd = a.map(|a| a.cmd.clone()).filter(|c| !c.is_empty()).unwrap_or_else(|| format!("{} {{node}}", r.action));
+            let mut out: Vec<String> = a.map_or(Vec::new(), |a| a.out.iter().map(|l| fill(l)).collect());
+            // The output stays honest: a command that won't help doesn't print a happy
+            // result line, and every run ends with the health check that decides it.
+            let warning = sim.faults[r.node].as_ref().is_some_and(|f| f.is_warning());
+            let effect = if sim.fixes_for(r.node).contains(&r.action) {
+                "fix"
+            } else if warning {
+                "none"
+            } else {
+                sim.response(r.node, &r.action).map_or("none", |x| x.effect.as_str())
+            };
+            let check = match effect {
+                "fix" => format!("$ healthcheck {} → ✓ passing", node.id),
+                "mitigate" => format!("$ healthcheck {} → ✓ passing (for now)", node.id),
+                _ => {
+                    if out.len() > 1 && r.action != "disabletls" {
+                        out.pop();
+                    }
+                    format!("$ healthcheck {} → ✗ still failing", node.id)
+                }
+            };
+            out.push(check);
+            (fill(&cmd), out)
+        };
+        let emoji = sim.workers[r.worker].emoji.clone();
+        game.term = Some(Term { run: r.id, start: sim.clock, total: r.total, prompt: format!("{emoji} {wname}@{}:~$ {cmd}", node.id), lines, verdict: None, done_at: None });
+        game.last_run = r.id;
+        game.term_hidden = false;
+    }
+    let clock = game.sim.clock;
+    let Some(term) = game.term.as_mut() else { return };
+    if term.verdict.is_some() || game.sim.runs.iter().any(|r| r.id == term.run) {
+        return;
+    }
+    // The run has landed: say whether it was the right call.
+    let o = game.sim.outcome.as_ref().filter(|_| game.sim.outcome_run == Some(term.run));
+    term.verdict = Some(match o {
+        Some(o) => {
+            let (head, color) = if o.title.starts_with("RESOLVED") || o.title.starts_with("PREVENTED") {
+                ("✅ CORRECT · that fixed the root cause", GREEN_400)
+            } else if o.title.starts_with("MITIGATED") {
+                ("🩹 PARTLY · it bought time; the cause is still there", AMBER)
+            } else if o.title.starts_with("DIAGNOSED") {
+                ("🔍 DIAGNOSIS COMPLETE", Color::srgb(0.55, 0.8, 1.0))
+            } else {
+                ("❌ NOT THE FIX · the problem is still there", RED_400)
+            };
+            let mut v = format!("{head}\nCause: {}\n{}", o.cause, o.action);
+            if let Some(l) = &o.learned {
+                v += &format!("\n📖 {l}");
+            }
+            (v, color)
+        }
+        None => ("· nothing left to fix here: someone got there first".to_string(), SLATE),
+    });
+    term.done_at = Some(clock);
+}
+
+/// The terminal card: the command types itself out, its output streams in,
+/// then the verdict. Click or Esc hides it; the next run brings it back.
+fn terminal(
     keys: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
     mut game: ResMut<Game>,
     mut card: Single<(&mut Node, &mut BorderColor, &Interaction), With<OutcomeCard>>,
-    text: Single<Entity, With<OutcomeText>>,
+    body: Single<Entity, With<OutcomeText>>,
+    verdict: Single<Entity, With<TermVerdict>>,
     mut texts: Query<&mut Text>,
+    mut colors: Query<&mut TextColor>,
 ) {
     let (node, border, interaction) = &mut *card;
     if **interaction == Interaction::Pressed || keys.just_pressed(KeyCode::Escape) {
-        game.outcome_hidden = true;
+        game.term_hidden = true;
     }
-    let Some(o) = game.sim.outcome.clone().filter(|o| !game.outcome_hidden && game.tour.is_none() && game.sim.clock - o.t < 9.0 && game.sim.phase == Phase::Running) else {
+    let clock = game.sim.clock;
+    let show = game.sim.phase == Phase::Running && game.tour.is_none() && !game.term_hidden;
+    let Some(t) = game.term.as_ref().filter(|t| show && t.done_at.is_none_or(|d| clock - d < 10.0)) else {
         node.display = Display::None;
         return;
     };
     node.display = Display::Flex;
-    **border = BorderColor::all(if o.title.starts_with("MITIGATED") { AMBER } else if o.ok { GREEN_500 } else { RED_400 });
-    let mut s = format!("{}\nCause: {}\nAction: {}", o.title, o.cause, o.action);
-    if let Some(l) = &o.learned {
-        s += &format!("\nLearned: {l}");
+    let el = clock - t.start;
+    // A third of the run types the command, the rest streams the output.
+    let typing = (t.total * 0.35).max(0.4);
+    let n = t.prompt.chars().count();
+    let shown = ((el / typing).clamp(0.0, 1.0) * n as f32) as usize;
+    let mut s: String = t.prompt.chars().take(shown).collect();
+    let cursor = (time.elapsed_secs() * 2.5) as u32 % 2 == 0;
+    if shown < n {
+        if cursor {
+            s.push('▌');
+        }
+    } else {
+        let k = if t.verdict.is_some() { t.lines.len() } else { (((el - typing) / (t.total - typing).max(0.1)) * t.lines.len() as f32).ceil().max(0.0) as usize };
+        for l in t.lines.iter().take(k.min(t.lines.len())) {
+            s += "\n";
+            s += l;
+        }
+        if t.verdict.is_none() && cursor {
+            s += "\n▌";
+        }
     }
-    s += "\n(click or Esc to dismiss)";
-    set(&mut texts, *text, s);
+    set(&mut texts, *body, s);
+    let (v, c) = t.verdict.clone().unwrap_or((String::new(), GREEN_400));
+    set(&mut texts, *verdict, v);
+    if let Ok(mut col) = colors.get_mut(*verdict) {
+        col.0 = c;
+    }
+    **border = BorderColor::all(if t.verdict.is_some() { c } else { GREEN_500.with_alpha(0.7) });
 }
 
 fn guide(mut commands: Commands, art: Res<Art>, game: Res<Game>, mut seen: ResMut<Seen>, panel: Single<(Entity, &mut Node, Option<&Children>), With<GuidePanel>>) {
@@ -1585,13 +1698,13 @@ fn button(art: &Art, marker: impl Bundle, label: String, fg: Color, bg: Color) -
     )
 }
 
-/// The urgent part of the node panel: incident, time to loss, who's on it, responses.
+/// The urgent part of the node panel: what's wrong, where it came from, the
+/// Time to Loss, and the responses.
 pub fn alert_box(body: &mut ChildSpawnerCommands, art: &Art, game: &Game, node: usize) {
     let sim = &game.sim;
     if sim.phase != Phase::Running {
         return;
     }
-    let crew: Vec<usize> = (0..sim.workers.len()).filter(|&w| sim.workers[w].queue.iter().any(|t| t.node == node)).collect();
     let Some(f) = sim.faults[node].as_ref().filter(|_| sim.visible(node)) else {
         if sim.health[node] == Health::Unreachable {
             body.spawn((
@@ -1601,9 +1714,32 @@ pub fn alert_box(body: &mut ChildSpawnerCommands, art: &Art, game: &Game, node: 
                 Node { margin: UiRect::bottom(px(8)), ..default() },
             ));
         }
-        row_buttons(body, art, sim, &crew);
+        row_buttons(body, art, sim, false);
         return;
     };
+    let block = |accent: Color, bg: Color| {
+        (
+            Node { flex_direction: FlexDirection::Column, padding: UiRect::all(px(8)), margin: UiRect::bottom(px(8)), row_gap: px(6), border: UiRect::all(px(1)), border_radius: BorderRadius::all(px(6)), ..default() },
+            BorderColor::all(accent.with_alpha(0.6)),
+            BackgroundColor(bg),
+        )
+    };
+    // A symptom: nothing to do here but go to the origin.
+    if let Some((_, origin)) = f.cause {
+        let od = sim.fault_def(origin);
+        body.spawn(block(AMBER, Color::srgba(0.25, 0.18, 0.0, 0.5))).with_children(|b| {
+            b.spawn((Text::new("📉 SYMPTOM · not the cause"), art.text(true, 12.0), TextColor(AMBER)));
+            b.spawn((Text::new(format!("This node is fine itself: {}.", f.story)), art.text(false, 12.0), TextColor(Color::srgb(1.0, 0.92, 0.86))));
+            b.spawn((
+                Text::new(format!("Origin: {} · {} {}", sim.nodes[origin].name, od.map_or("", |d| d.emoji.as_str()), od.map_or("", |d| d.name.as_str()))),
+                art.text(true, 12.0),
+                TextColor(RED_400),
+            ));
+            b.spawn((Text::new("Fix the origin and this clears by itself."), art.text(false, 11.0), TextColor(GREEN_300)));
+            b.spawn(button(art, OriginButton, format!("🎯 Go to the origin: {} (O)", sim.nodes[origin].name), RED_400, Color::srgba(0.3, 0.04, 0.04, 0.5)));
+        });
+        return;
+    }
     let Some(d) = sim.rules.fault(&f.kind) else { return };
     let warning = f.is_warning();
     let (accent, bg) = if warning || f.mitigated > 0.0 { (AMBER, Color::srgba(0.3, 0.2, 0.0, 0.5)) } else { (RED_400, Color::srgba(0.3, 0.04, 0.04, 0.5)) };
@@ -1618,40 +1754,45 @@ pub fn alert_box(body: &mut ChildSpawnerCommands, art: &Art, game: &Game, node: 
         };
         (d.emoji.as_str(), format!("{stage} · {}", d.name), d.symptom.clone())
     };
-    let who = if crew.is_empty() {
-        "Nobody assigned yet".to_string()
-    } else {
-        crew.iter().map(|&w| format!("{} {} (ETA {:.0}s)", sim.workers[w].emoji, sim.workers[w].name, sim.eta(w, node))).collect::<Vec<_>>().join(", ")
-    };
+    let hurting: Vec<&str> = (0..sim.nodes.len()).filter(|&j| sim.faults[j].as_ref().is_some_and(|g| g.cause.is_some_and(|c| c.0 == f.id))).map(|j| sim.nodes[j].name.as_str()).collect();
+    let running = sim.runs.iter().find(|r| r.node == node);
     let worker = game.chosen.or_else(|| sim.pick_worker(node, None)).unwrap_or(0);
-    body.spawn((
-        Node { flex_direction: FlexDirection::Column, padding: UiRect::all(px(8)), margin: UiRect::bottom(px(8)), row_gap: px(6), border: UiRect::all(px(1)), border_radius: BorderRadius::all(px(6)), ..default() },
-        BorderColor::all(accent.with_alpha(0.6)),
-        BackgroundColor(bg),
-    ))
-    .with_children(|b| {
+    body.spawn(block(accent, bg)).with_children(|b| {
         b.spawn(Node { align_items: AlignItems::Center, column_gap: px(6), flex_wrap: FlexWrap::Wrap, ..default() }).with_children(|r| {
             r.spawn((Text::new(glyph), TextFont { font: art.emoji.clone().into(), font_size: FontSize::Px(16.0), ..default() }));
             r.spawn((Text::new(title), art.text(true, 12.0), TextColor(accent)));
         });
         b.spawn(Node { align_items: AlignItems::Center, column_gap: px(6), ..default() }).with_children(|r| {
-            let label = if f.mitigated > 0.0 { "⏱ relief ends in" } else if f.stage == Stage::Down { "⛔ down: same fix, 1.5× slower" } else { "⏳ time to loss" };
+            let label = if f.mitigated > 0.0 { "⏱ relief ends in" } else if f.stage == Stage::Down { "⛔ down: still needs the fix" } else { "⏳ time to loss" };
             r.spawn((Text::new(label), art.text(true, 12.0), TextColor(accent)));
             r.spawn((PanelTtl(node), Text::new(""), art.text(true, 14.0), TextColor(accent)));
         });
         b.spawn((Text::new(text), art.text(false, 12.0), TextColor(Color::srgb(1.0, 0.92, 0.86))));
-        b.spawn((Text::new(format!("👥 {who}")), art.text(false, 11.0), TextColor(GREEN_300)));
+        if !f.story.is_empty() {
+            b.spawn((Text::new(format!("🧭 How it started: {}", f.story)), art.text(false, 11.0), TextColor(Color::srgb(0.75, 0.88, 1.0))));
+        }
+        if !hurting.is_empty() {
+            b.spawn((Text::new(format!("📉 Already hurting: {}", hurting.join(", "))), art.text(false, 11.0), TextColor(AMBER)));
+        } else if !warning && f.stage != Stage::Down {
+            b.spawn((Text::new("📉 Left alone, it spreads to its neighbours as its timer runs down."), art.text(false, 11.0), TextColor(AMBER.with_alpha(0.8))));
+        }
+        if let Some(r) = running {
+            let w = &sim.workers[r.worker];
+            b.spawn((Text::new(format!("▸ {} {} is running it… (see the terminal)", w.emoji, w.name)), art.text(true, 11.0), TextColor(AMBER)));
+        }
         let chooser = if game.chosen.is_some() { "" } else { " (auto)" };
-        b.spawn((Text::new(format!("Responses for {} {}{chooser}:", sim.workers[worker].emoji, sim.workers[worker].name)), art.text(true, 10.0), TextColor(GREEN_400)));
+        b.spawn((Text::new(format!("Run by {} {}{chooser}:", sim.workers[worker].emoji, sim.workers[worker].name)), art.text(true, 10.0), TextColor(GREEN_400)));
+        let fixes = sim.fixes_for(node);
         for (i, action) in f.options.iter().enumerate() {
             let tried = f.tried & (1 << i) != 0;
             let a = sim.rules.action(action);
             let (emoji, label) = a.map_or(("🔧", action.as_str()), |a| (a.emoji.as_str(), a.label.as_str()));
             let able = sim.can_do(worker, action);
             let secs = sim.work_secs(worker, action, node);
-            // After a diagnosis (or a failed try), say what each option does.
-            let tag = if f.diagnosed || tried {
-                let fixes = sim.fixes_for(node);
+            // After a hint, a diagnosis or a failed try, say what each option does.
+            let tag = if f.hinted && !f.diagnosed && !tried {
+                if fixes.contains(action) { "  🍌 this one".to_string() } else { String::new() }
+            } else if f.diagnosed || tried {
                 if fixes.contains(action) {
                     "  ✓ fixes the cause".to_string()
                 } else {
@@ -1675,24 +1816,23 @@ pub fn alert_box(body: &mut ChildSpawnerCommands, art: &Art, game: &Game, node: 
             .with_children(|r| {
                 r.spawn((Text::new(format!("{}", i + 1)), art.text(true, 12.0), TextColor(fg)));
                 r.spawn((Text::new(emoji), TextFont { font: art.emoji.clone().into(), font_size: FontSize::Px(14.0), ..default() }));
-                r.spawn((Text::new(format!("{label} · {secs:.0}s{tag}{heavy}")), art.text(false, 12.0), TextColor(fg)));
+                r.spawn((Text::new(format!("{label} · {secs:.1}s{tag}{heavy}")), art.text(false, 12.0), TextColor(fg)));
             });
         }
         if !f.diagnosed && !warning {
             let secs = sim.work_secs(worker, "diagnose", node);
-            b.spawn(button(art, DiagnoseButton, format!("🔍 Diagnose first (I) · {secs:.0}s: shows what each option does"), Color::srgb(0.55, 0.8, 1.0), Color::srgba(0.0, 0.1, 0.2, 0.5)));
+            b.spawn(button(art, DiagnoseButton, format!("🔍 Diagnose (I) · {secs:.1}s: shows what every option does"), Color::srgb(0.55, 0.8, 1.0), Color::srgba(0.0, 0.1, 0.2, 0.5)));
         }
     });
-    row_buttons(body, art, sim, &crew);
+    row_buttons(body, art, sim, !f.diagnosed && !f.hinted);
 }
 
-fn row_buttons(body: &mut ChildSpawnerCommands, art: &Art, sim: &Sim, crew: &[usize]) {
+fn row_buttons(body: &mut ChildSpawnerCommands, art: &Art, sim: &Sim, hint: bool) {
     body.spawn(Node { column_gap: px(6), flex_wrap: FlexWrap::Wrap, row_gap: px(6), margin: UiRect::bottom(px(8)), ..default() }).with_children(|r| {
-        r.spawn(button(art, GoButton, "🐾 Send here (G)".into(), GREEN_300, GREEN_900.with_alpha(0.4)));
-        let can = sim.bananas >= sim.rules.swing_cost;
-        r.spawn(button(art, SwingButton, format!("🌿 Swing (J) 🍌{}", sim.rules.swing_cost), if can { AMBER } else { Color::srgb(0.45, 0.45, 0.45) }, Color::srgba(0.25, 0.2, 0.0, 0.4)));
-        for &w in crew {
-            r.spawn(button(art, CancelButton(w), format!("✖ cancel {}'s last job", sim.workers[w].name), RED_400, Color::NONE));
+        r.spawn(button(art, GoButton, "🐾 Send someone here (G)".into(), GREEN_300, GREEN_900.with_alpha(0.4)));
+        if hint {
+            let can = sim.bananas >= sim.rules.hint_cost;
+            r.spawn(button(art, HintButton, format!("🍌 Hint (H) · {} of {}", sim.rules.hint_cost, sim.bananas), if can { AMBER } else { Color::srgb(0.45, 0.45, 0.45) }, Color::srgba(0.25, 0.2, 0.0, 0.4)));
         }
     });
 }
